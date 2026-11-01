@@ -1,12 +1,13 @@
-"""MeshLab dashboard — offline simulation by default."""
-import networkx as nx
+"""MeshLab interactive simulation dashboard."""
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 from meshlab.simulator import simulate
+from meshlab.topology import build_graph, shortest_route, network_summary
 
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
-st.caption("Meshtastic network exploration • simulation-first, privacy-conscious")
+st.caption("Mesh network simulation and monitoring • privacy-first")
 with st.sidebar:
     st.header("Workspace")
     mode = st.radio("Data source", ["Simulation", "Live radio (local only)"])
@@ -14,35 +15,63 @@ with st.sidebar:
     seed = st.number_input("Simulation seed", 0, 100000, 42)
     radius = st.slider("Illustrative radio range", 1.0, 10.0, 5.0, 0.5)
 if mode != "Simulation":
-    st.info("Live radio support is provided by the optional local Python adapter. "
-            "A persistent background gateway and safe connection controls are planned "
-            "for the next milestone. This hosted dashboard does not access local USB devices.")
+    st.info("Local serial support is experimental and not connected to this dashboard yet. "
+            "A persistent, read-only gateway will be added in a future milestone.")
     st.stop()
+
 data = simulate(count, int(seed), radius)
 nodes, links = data["nodes"], data["links"]
-a, b, c = st.columns(3)
+graph = build_graph(data)
+summary = network_summary(graph)
+a, b, c, d = st.columns(4)
 a.metric("Nodes", len(nodes))
-b.metric("Observed links (simulated)", len(links))
-c.metric("Average battery", f"{sum(n['battery'] for n in nodes)/len(nodes):.0f}%")
-st.subheader("Network topology")
-graph = nx.Graph()
-for node in nodes:
-    graph.add_node(node["node_id"], label=node["name"])
+b.metric("Links", len(links))
+c.metric("Connected groups", summary["components"])
+d.metric("Average battery", f"{sum(n['battery'] for n in nodes)/len(nodes):.0f}%")
+
+st.subheader("Interactive network topology")
+node_by_id = {n["node_id"]: n for n in nodes}
+fig = go.Figure()
 for link in links:
-    graph.add_edge(link["source"], link["target"])
-positions = {node["node_id"]: (node["x"], node["y"]) for node in nodes}
-edges = pd.DataFrame([{"x": [positions[u][0], positions[v][0]],
-                       "y": [positions[u][1], positions[v][1]]} for u, v in graph.edges])
-# Plotly is optional in the core; Streamlit's built-in chart handles positions.
-st.scatter_chart(pd.DataFrame(nodes), x="x", y="y", color="battery",
-                 size=100, height=400)
-st.caption("Node positions are synthetic coordinates, not geographic locations. "
-           "Links are listed below; this first chart does not draw edges.")
+    src, dst = node_by_id[link["source"]], node_by_id[link["target"]]
+    fig.add_trace(go.Scatter(
+        x=[src["x"], dst["x"]], y=[src["y"], dst["y"]],
+        mode="lines", line=dict(width=1.8, color="#4f8fa5"),
+        hoverinfo="skip", showlegend=False))
+fig.add_trace(go.Scatter(
+    x=[n["x"] for n in nodes], y=[n["y"] for n in nodes],
+    mode="markers+text", text=[n["name"] for n in nodes],
+    textposition="top center", customdata=[[n["node_id"], n["battery"]] for n in nodes],
+    marker=dict(size=16, color=[n["battery"] for n in nodes],
+                colorscale="Viridis", showscale=True, colorbar=dict(title="Battery %"),
+                line=dict(width=1, color="#d8e5ef")),
+    hovertemplate="%{text}<br>ID: %{customdata[0]}<br>Battery: %{customdata[1]}%<extra></extra>",
+    showlegend=False))
+fig.update_layout(template="plotly_dark", height=530, margin=dict(l=15,r=15,t=15,b=15),
+                  xaxis=dict(title="Synthetic X", range=[-0.5, 10.5]),
+                  yaxis=dict(title="Synthetic Y", range=[-0.5, 10.5],
+                             scaleanchor="x", scaleratio=1))
+st.plotly_chart(fig, use_container_width=True)
+st.caption("Synthetic coordinates and illustrative links; this is not a geographic map or validated RF model.")
+
+st.subheader("Route explorer")
+names = {n["name"]: n["node_id"] for n in nodes}
 left, right = st.columns(2)
 with left:
-    st.subheader("Nodes")
-    st.dataframe(pd.DataFrame(nodes), hide_index=True, use_container_width=True)
+    source_name = st.selectbox("Source node", list(names))
 with right:
-    st.subheader("Simulated links")
+    target_name = st.selectbox("Destination node", list(names), index=len(names)-1)
+route = shortest_route(graph, names[source_name], names[target_name])
+if route is None:
+    st.warning("No route exists between those nodes with the selected range.")
+else:
+    id_to_name = {v:k for k,v in names.items()}
+    st.success(" → ".join(id_to_name[n] for n in route))
+    st.caption(f"{len(route)-1} simulated hop(s); routing is shortest-hop graph analysis, "
+               "not a reproduction of Meshtastic firmware routing.")
+
+tab1, tab2 = st.tabs(["Nodes", "Links"])
+with tab1:
+    st.dataframe(pd.DataFrame(nodes), hide_index=True, use_container_width=True)
+with tab2:
     st.dataframe(pd.DataFrame(links), hide_index=True, use_container_width=True)
-st.caption("Simulation metrics are illustrative and must not be interpreted as RF predictions.")
