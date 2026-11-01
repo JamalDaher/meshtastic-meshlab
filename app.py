@@ -44,7 +44,27 @@ if mode != "Simulation":
     if st.button("Refresh received telemetry"):
         st.rerun()
     snapshot = gateway.monitor.snapshot()
-    st.metric("Observed nodes", len(snapshot["nodes"]))
+    from meshlab.analytics import node_activity, signal_series, export_csv
+    events = snapshot["events"]
+    stats = node_activity(events)
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Observed nodes", len(snapshot["nodes"]))
+    m2.metric("Packets in memory", len(events))
+    m3.metric("Active nodes (5 min)", sum(row["active"] for row in stats))
+    st.subheader("Signal history")
+    selected = st.selectbox("Node", ["All nodes"] + sorted(n["node"] for n in snapshot["nodes"]))
+    series = signal_series(events, None if selected == "All nodes" else selected)
+    if series:
+        df = pd.DataFrame(series)
+        df["time"] = pd.to_datetime(df["time"], utc=True)
+        st.line_chart(df, x="time", y=["snr", "rssi"], height=280)
+        st.caption("SNR is in dB; RSSI is in dBm. Their scales differ.")
+    else:
+        st.info("No received signal readings yet.")
+    st.subheader("Node activity")
+    st.dataframe(pd.DataFrame(stats), hide_index=True, use_container_width=True)
+    st.download_button("Export metadata CSV", export_csv(events),
+                       file_name="meshlab-telemetry.csv", mime="text/csv", disabled=not events)
     st.subheader("Latest node readings")
     st.dataframe(pd.DataFrame(snapshot["nodes"]), hide_index=True, use_container_width=True)
     st.subheader("Recent packet metadata")
