@@ -1,19 +1,25 @@
-"""Explicit, local-only serial radio gateway for read-only monitoring."""
+"""Explicit local-only serial and TCP radio gateways."""
 from meshlab.monitor import Monitor
 
-class SerialGateway:
+class RadioGateway:
     def __init__(self, monitor: Monitor):
         self.monitor = monitor
         self.interface = None
         self.callback = None
 
-    def connect(self, port: str):
+    def connect(self, target: str, transport: str = "serial"):
         if self.interface is not None:
             raise RuntimeError("Already connected")
-        if not port or not port.strip():
-            raise ValueError("Select a serial port")
-        from meshlab.live import connect_serial
-        interface, callback = connect_serial(port, self.monitor.ingest)
+        if not target or not target.strip():
+            raise ValueError("Select a port or private IP address")
+        from meshlab.live import connect_serial, connect_tcp
+        if transport == "serial":
+            connector = connect_serial
+        elif transport == "tcp":
+            connector = connect_tcp
+        else:
+            raise ValueError("Unsupported transport")
+        interface, callback = connector(target, self.monitor.ingest)
         self.interface, self.callback = interface, callback
 
     def disconnect(self):
@@ -27,3 +33,7 @@ class SerialGateway:
     @property
     def connected(self):
         return self.interface is not None
+
+class SerialGateway(RadioGateway):
+    def connect(self, port: str):
+        return super().connect(port, "serial")
