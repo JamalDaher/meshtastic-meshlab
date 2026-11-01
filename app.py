@@ -15,8 +15,41 @@ with st.sidebar:
     seed = st.number_input("Simulation seed", 0, 100000, 42)
     radius = st.slider("Illustrative radio range", 1.0, 10.0, 5.0, 0.5)
 if mode != "Simulation":
-    st.info("Local serial support is experimental and not connected to this dashboard yet. "
-            "A persistent, read-only gateway will be added in a future milestone.")
+    from meshlab.monitor import Monitor
+    from meshlab.gateway import SerialGateway
+    if "radio_gateway" not in st.session_state:
+        st.session_state.radio_gateway = SerialGateway(Monitor())
+    gateway = st.session_state.radio_gateway
+    st.subheader("Local serial radio")
+    st.warning("Use only on your own computer with a USB-connected radio. "
+               "Do not expose a connected dashboard publicly.")
+    port = st.text_input("Serial port", placeholder="COM3 or /dev/ttyUSB0")
+    left, right = st.columns(2)
+    with left:
+        if st.button("Connect", disabled=gateway.connected):
+            try:
+                gateway.connect(port)
+                st.success("Connected")
+            except Exception as exc:
+                st.error(f"Connection failed: {type(exc).__name__}: {exc}")
+    with right:
+        if st.button("Disconnect", disabled=not gateway.connected):
+            try:
+                gateway.disconnect()
+                st.success("Disconnected")
+            except Exception as exc:
+                st.error(f"Disconnect failed: {type(exc).__name__}: {exc}")
+    st.write("Status:", "Connected" if gateway.connected else "Disconnected")
+    if st.button("Refresh received telemetry"):
+        st.rerun()
+    snapshot = gateway.monitor.snapshot()
+    st.metric("Observed nodes", len(snapshot["nodes"]))
+    st.subheader("Latest node readings")
+    st.dataframe(pd.DataFrame(snapshot["nodes"]), hide_index=True, use_container_width=True)
+    st.subheader("Recent packet metadata")
+    st.dataframe(pd.DataFrame(snapshot["events"]), hide_index=True, use_container_width=True)
+    st.caption("Only sender ID, reception time, RSSI and SNR are stored in memory. "
+               "No message text, payload or position is retained.")
     st.stop()
 
 data = simulate(count, int(seed), radius)
