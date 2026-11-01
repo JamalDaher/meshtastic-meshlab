@@ -16,19 +16,20 @@ with st.sidebar:
     radius = st.slider("Illustrative radio range", 1.0, 10.0, 5.0, 0.5)
 if mode != "Simulation":
     from meshlab.monitor import Monitor
-    from meshlab.gateway import SerialGateway
+    from meshlab.gateway import RadioGateway
     if "radio_gateway" not in st.session_state:
-        st.session_state.radio_gateway = SerialGateway(Monitor())
+        st.session_state.radio_gateway = RadioGateway(Monitor())
     gateway = st.session_state.radio_gateway
-    st.subheader("Local serial radio")
-    st.warning("Use only on your own computer with a USB-connected radio. "
-               "Do not expose a connected dashboard publicly.")
-    port = st.text_input("Serial port", placeholder="COM3 or /dev/ttyUSB0")
+    st.subheader("Local radio connection")
+    transport = st.radio("Connection type", ["USB serial", "TCP / Wi-Fi"], horizontal=True)
+    st.warning("Run locally on a trusted network. Do not expose a connected dashboard publicly.")
+    target = st.text_input("Serial port" if transport == "USB serial" else "Private radio IP",
+                           placeholder="COM3 or /dev/ttyUSB0" if transport == "USB serial" else "192.168.1.50")
     left, right = st.columns(2)
     with left:
         if st.button("Connect", disabled=gateway.connected):
             try:
-                gateway.connect(port)
+                gateway.connect(target, "serial" if transport == "USB serial" else "tcp")
                 st.success("Connected")
             except Exception as exc:
                 st.error(f"Connection failed: {type(exc).__name__}: {exc}")
