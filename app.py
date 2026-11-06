@@ -18,6 +18,7 @@ from meshlab.rf import RadioProfile, link_budget
 from meshlab.rf_simulator import simulate_rf
 from meshlab.rf_coverage import margin_color, margin_category, coverage_summary
 from meshlab.rf_exports import encode_rf_scenario, decode_rf_scenario, build_rf_report
+from meshlab.geo import geographic_links, validate_nodes
 
 def apply_rf_preset(settings):
     """Button callback runs before widget construction on the next rerun."""
@@ -397,6 +398,38 @@ with workspace_scenarios:
     st.download_button("Download simulation report JSON",
                        export_json(build_report(count, int(seed), radius)),
                        file_name="meshlab-simulation-report.json", mime="application/json")
+
+    st.divider()
+    st.subheader("Geographic RF planner · v1.3 preview")
+    st.caption("Enter real latitude/longitude for proposed nodes. This is a separate planning tool, not a replacement for the synthetic topology.")
+    if "geo_nodes" not in st.session_state:
+        st.session_state.geo_nodes = pd.DataFrame([
+            {"name": "Site A", "lat": 34.25, "lon": -88.40},
+            {"name": "Site B", "lat": 34.26, "lon": -88.39},
+        ])
+    edited_geo = st.data_editor(st.session_state.geo_nodes, num_rows="dynamic",
+                                use_container_width=True, key="geo_editor")
+    geo_frequency = st.number_input("Geographic RF frequency (MHz)", 1.0, 10000.0, 906.875, key="geo_frequency")
+    geo_tx_power = st.number_input("Geographic RF TX power (dBm)", -30.0, 40.0, 22.0, key="geo_tx_power")
+    geo_sensitivity = st.number_input("Geographic RF sensitivity (dBm)", -160.0, -50.0, -130.0, key="geo_sensitivity")
+    geo_tx_gain = st.number_input("Geographic TX gain (dBi)", -20.0, 40.0, 2.0, key="geo_tx_gain")
+    geo_rx_gain = st.number_input("Geographic RX gain (dBi)", -20.0, 40.0, 2.0, key="geo_rx_gain")
+    geo_loss = st.number_input("Geographic cable loss (dB)", 0.0, 100.0, 0.0, key="geo_loss")
+    try:
+        geo_nodes = validate_nodes(edited_geo.to_dict("records"))
+        geo_profile = RadioProfile(frequency_mhz=geo_frequency, tx_power_dbm=geo_tx_power,
+                                   receiver_sensitivity_dbm=geo_sensitivity, tx_gain_dbi=geo_tx_gain,
+                                   rx_gain_dbi=geo_rx_gain, cable_loss_db=geo_loss)
+        geo_links = geographic_links(geo_nodes, geo_profile)
+        st.map(pd.DataFrame(geo_nodes).rename(columns={"lon": "longitude", "lat": "latitude"}),
+               latitude="latitude", longitude="longitude", size=80)
+        st.write("Estimated pairwise geographic links")
+        st.dataframe(pd.DataFrame(geo_links), hide_index=True, use_container_width=True)
+        st.download_button("Export geographic links CSV", pd.DataFrame(geo_links).to_csv(index=False),
+                           file_name="meshlab-geographic-links.csv", mime="text/csv")
+        st.caption("Map shows node positions, not coverage. No terrain, obstruction, fading or interference is modeled.")
+    except (ValueError, TypeError) as exc:
+        st.warning(f"Geographic planner: {exc}")
 
     tab1, tab2 = st.tabs(["Nodes", "Links"])
     with tab1:
