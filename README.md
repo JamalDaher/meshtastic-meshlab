@@ -26,7 +26,7 @@ In ideal free-space RF mode, the Network topology can color active links by esti
 
 ## RF presets and reports
 
-In ideal RF connectivity mode, the Scenarios tab can download a versioned RF settings preset and a reproducible RF simulation report containing the selected radio profile, coordinate scale, computed network links, link margins and graph summary. Uploaded RF presets can be validated and inspected, but **do not automatically apply to controls** yet. Legacy distance-model presets and reports remain separate for backward compatibility.
+In ideal RF connectivity mode, the Scenarios tab can download a versioned RF settings preset and a reproducible RF simulation report containing the selected radio profile, coordinate scale, computed network links, link margins and graph summary. Uploaded RF presets can be validated and inspected, and applied to the current simulation with **Apply RF scenario to simulation** (up to the dashboard limit of 30 nodes). Legacy distance-model presets and reports remain separate for backward compatibility.
 
 ## Features
 

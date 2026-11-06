@@ -19,6 +19,22 @@ from meshlab.rf_simulator import simulate_rf
 from meshlab.rf_coverage import margin_color, margin_category, coverage_summary
 from meshlab.rf_exports import encode_rf_scenario, decode_rf_scenario, build_rf_report
 
+def apply_rf_preset(settings):
+    """Button callback runs before widget construction on the next rerun."""
+    profile = settings["profile"]
+    st.session_state["sim_count"] = settings["count"]
+    st.session_state["sim_seed"] = settings["seed"]
+    st.session_state["connectivity_mode"] = "Ideal free-space RF"
+    st.session_state["km_per_unit"] = settings["km_per_unit"]
+    for key, field in (
+        ("rf_frequency", "frequency_mhz"), ("rf_tx_power", "tx_power_dbm"),
+        ("rf_sensitivity", "receiver_sensitivity_dbm"),
+        ("rf_tx_gain", "tx_gain_dbi"), ("rf_rx_gain", "rx_gain_dbi"),
+        ("rf_cable_loss", "cable_loss_db")
+    ):
+        st.session_state[key] = float(profile[field])
+    st.session_state["rf_preset_applied"] = True
+
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
 st.caption("Explore simulated mesh connectivity, failures and recovery • privacy-first")
@@ -32,20 +48,20 @@ with st.sidebar:
         st.caption("Hosted demo: simulation only. Connect physical radios using a local installation.")
     if mode == "Simulation":
         with st.expander("Simulation settings", expanded=False):
-            count = st.slider("Virtual nodes", 2, 30, 10)
-            seed = st.number_input("Simulation seed", 0, 100000, 42)
-            connectivity_mode = st.radio("Connectivity model", ["Distance threshold", "Ideal free-space RF"])
+            count = st.slider("Virtual nodes", 2, 30, 10, key="sim_count")
+            seed = st.number_input("Simulation seed", 0, 100000, 42, key="sim_seed")
+            connectivity_mode = st.radio("Connectivity model", ["Distance threshold", "Ideal free-space RF"], key="connectivity_mode")
             if connectivity_mode == "Distance threshold":
                 radius = st.slider("Illustrative radio range", 1.0, 10.0, 5.0, 0.5)
             else:
                 km_per_unit = st.number_input("Kilometers per synthetic coordinate unit",
-                                              min_value=0.01, max_value=100.0, value=0.5)
-                rf_frequency = st.number_input("RF frequency (MHz)", 1.0, 10000.0, 906.875)
-                rf_tx_power = st.number_input("RF transmit power (dBm)", -30.0, 40.0, 22.0)
-                rf_sensitivity = st.number_input("RF receiver sensitivity (dBm)", -160.0, -50.0, -130.0)
-                rf_tx_gain = st.number_input("RF TX antenna gain (dBi)", -20.0, 40.0, 2.0)
-                rf_rx_gain = st.number_input("RF RX antenna gain (dBi)", -20.0, 40.0, 2.0)
-                rf_cable_loss = st.number_input("RF total cable loss (dB)", 0.0, 100.0, 0.0)
+                                              min_value=0.01, max_value=100.0, value=0.5, key="km_per_unit")
+                rf_frequency = st.number_input("RF frequency (MHz)", 1.0, 10000.0, 906.875, key="rf_frequency")
+                rf_tx_power = st.number_input("RF transmit power (dBm)", -30.0, 40.0, 22.0, key="rf_tx_power")
+                rf_sensitivity = st.number_input("RF receiver sensitivity (dBm)", -160.0, -50.0, -130.0, key="rf_sensitivity")
+                rf_tx_gain = st.number_input("RF TX antenna gain (dBi)", -20.0, 40.0, 2.0, key="rf_tx_gain")
+                rf_rx_gain = st.number_input("RF RX antenna gain (dBi)", -20.0, 40.0, 2.0, key="rf_rx_gain")
+                rf_cable_loss = st.number_input("RF total cable loss (dB)", 0.0, 100.0, 0.0, key="rf_cable_loss")
 if mode != "Simulation":
     from meshlab.monitor import Monitor
     from meshlab.gateway import RadioGateway
@@ -333,10 +349,17 @@ with workspace_scenarios:
         if rf_uploaded is not None:
             try:
                 restored = decode_rf_scenario(rf_uploaded.getvalue().decode("utf-8"))
-                st.success("Valid RF scenario. Its settings are shown below for manual application.")
+                st.success("Valid RF scenario.")
                 st.json(restored)
+                if restored["count"] > 30:
+                    st.warning("This preset exceeds the dashboard limit of 30 nodes and cannot be applied here.")
+                else:
+                    st.button("Apply RF scenario to simulation", on_click=apply_rf_preset,
+                              args=(restored,), type="primary")
             except (ValueError, UnicodeError) as exc:
                 st.error(f"Invalid RF scenario: {exc}")
+        if st.session_state.pop("rf_preset_applied", False):
+            st.success("RF scenario settings applied to the simulator.")
         st.divider()
     st.subheader("Scenario planner")
     st.caption("Legacy distance-model scenario tools are shown below. RF presets and reports are separate and versioned.")
