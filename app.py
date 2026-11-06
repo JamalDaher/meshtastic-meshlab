@@ -16,6 +16,7 @@ from meshlab.recovery import recovery_options, recovery_sequence
 from meshlab.dashboard import simulation_dashboard
 from meshlab.rf import RadioProfile, link_budget
 from meshlab.rf_simulator import simulate_rf
+from meshlab.rf_coverage import margin_color, margin_category, coverage_summary
 
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
@@ -171,14 +172,20 @@ with workspace_network:
     show_route = st.toggle("Highlight selected route", value=True)
     bridge_links = set(weak["bridge_links"]) if highlight_weak else set()
     critical_ids = set(weak["critical_nodes"]) if highlight_weak else set()
+    color_by_margin = connectivity_mode == "Ideal free-space RF" and st.toggle("Color links by RF margin", value=True)
+    if color_by_margin:
+        margin_counts = coverage_summary(overlay["active_links"])
+        st.caption(f"RF margins: {margin_counts['high margin']} high (≥15 dB), {margin_counts['moderate margin']} moderate (6–15 dB), {margin_counts['low margin']} low (0–6 dB). Below-sensitivity links are absent.")
     for link in overlay["active_links"]:
         src, dst = node_by_id[link["source"]], node_by_id[link["target"]]
         is_bridge = tuple(sorted((link["source"], link["target"]))) in bridge_links
         fig.add_trace(go.Scatter(
             x=[src["x"], dst["x"]], y=[src["y"], dst["y"]],
             mode="lines", line=dict(width=3.5 if is_bridge else 1.8,
-                                    color="#ff9f43" if is_bridge else "#4f8fa5"),
-            hoverinfo="skip", showlegend=False))
+                                    color=margin_color(link["link_margin_db"]) if color_by_margin else "#ff9f43" if is_bridge else "#4f8fa5"),
+            hoverinfo="text" if color_by_margin else "skip",
+            text=(f"RF margin: {link['link_margin_db']:.1f} dB · {margin_category(link['link_margin_db'])}") if color_by_margin else None,
+            showlegend=False))
     fig.add_trace(go.Scatter(
         x=[n["x"] for n in nodes], y=[n["y"] for n in nodes],
         mode="markers+text" if show_labels else "markers", text=[n["name"] for n in nodes],
