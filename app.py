@@ -8,6 +8,7 @@ from meshlab.resilience import analyze_failure, critical_nodes
 from meshlab.timeline import generate_timeline
 from meshlab.reliability import single_node_impact, range_comparison
 from meshlab.report import build_report, export_json
+from meshlab.scenarios import encode_scenario, decode_scenario, compare_scenarios
 
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
@@ -179,6 +180,36 @@ comparison_df = pd.DataFrame(range_comparison(count, int(seed), range_values))
 st.write("Illustrative range comparison (same node positions)")
 st.line_chart(comparison_df, x="range", y=["links", "connected_groups"], height=260)
 st.dataframe(comparison_df, hide_index=True, use_container_width=True)
+
+st.subheader("Scenario planner")
+st.caption("Save simulation settings, reload them later, and compare two synthetic network configurations.")
+current_scenario = {"count": count, "seed": int(seed), "radius": float(radius)}
+st.download_button("Save current scenario JSON", encode_scenario(current_scenario),
+                   file_name="meshlab-scenario.json", mime="application/json")
+uploaded_scenario = st.file_uploader("Load a saved scenario JSON", type=["json"])
+if uploaded_scenario is not None:
+    try:
+        loaded = decode_scenario(uploaded_scenario.getvalue().decode("utf-8"))
+        st.success("Scenario loaded for comparison.")
+        st.json(loaded)
+    except (ValueError, UnicodeError) as exc:
+        st.error(f"Invalid scenario file: {exc}")
+        loaded = None
+else:
+    loaded = None
+with st.expander("Compare two scenarios", expanded=False):
+    st.caption("Scenario A uses current settings. Scenario B can use a loaded file or manual settings.")
+    if loaded is not None:
+        other_scenario = loaded
+    else:
+        b_count = st.slider("Scenario B nodes", 2, 30, count, key="scenario_b_count")
+        b_seed = st.number_input("Scenario B seed", 0, 100000, int(seed), key="scenario_b_seed")
+        b_radius = st.slider("Scenario B range", 1.0, 10.0, float(radius), 0.5, key="scenario_b_radius")
+        other_scenario = {"count": b_count, "seed": int(b_seed), "radius": b_radius}
+    st.dataframe(pd.DataFrame(compare_scenarios(current_scenario, other_scenario)),
+                 hide_index=True, use_container_width=True)
+    if current_scenario["count"] != other_scenario["count"] or current_scenario["seed"] != other_scenario["seed"]:
+        st.info("Node count or seed differs. Results compare different node layouts, not only radio range.")
 
 st.subheader("Reproducible simulation report")
 st.caption("Download the simulation inputs, topology, connectivity summary, and node impact as JSON.")

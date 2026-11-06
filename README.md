@@ -10,6 +10,7 @@ Simulation-first Meshtastic-style mesh network explorer built with Python and St
 - Reproducible simulated event timeline with outage/recovery charts and CSV export
 - Single-node reliability comparisons and illustrative range analysis
 - Portable JSON simulation report with parameters, network data, and resilience summary
+- Scenario planner: save/load portable scenario presets and compare synthetic connectivity side-by-side
 - Experimental local USB/TCP Meshtastic radio metadata monitoring, signal history, and CSV export
 - Automated unit tests via GitHub Actions
 
@@ -24,7 +25,7 @@ python -m pip install -r requirements.txt
 streamlit run app.py
 ```
 
-In the app, choose **Simulation** to explore without hardware. Expand **Simulation settings** to set virtual node count, random seed and illustrative range. Export JSON reports to reproduce and share a scenario. The report contains synthetic topology data, not live packet data.
+In the app, choose **Simulation** to explore without hardware. Expand **Simulation settings** to set virtual node count, random seed and illustrative range. Save/load scenario JSON presets, compare alternative layouts, and export JSON reports to reproduce and share a scenario. The report contains synthetic topology data, not live packet data.
 
 Run tests with `python -m pytest -q`.
 
