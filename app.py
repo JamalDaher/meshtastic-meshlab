@@ -13,6 +13,7 @@ from meshlab.scenarios import encode_scenario, decode_scenario, compare_scenario
 from meshlab.weak_points import weak_points
 from meshlab.outage_overlay import outage_overlay
 from meshlab.recovery import recovery_options, recovery_sequence
+from meshlab.dashboard import simulation_dashboard
 
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
@@ -93,11 +94,23 @@ data = simulate(count, int(seed), radius)
 nodes, links = data["nodes"], data["links"]
 graph = build_graph(data)
 summary = network_summary(graph)
+st.subheader("Simulation at a glance")
+failed_names = st.multiselect("Offline nodes (applies to all workspace tabs)",
+                              [n["name"] for n in nodes], key="offline_nodes",
+                              help="Change this to update topology, routes, resilience, and dashboard together.")
+failed_ids = [n["node_id"] for n in nodes if n["name"] in failed_names]
+overlay = outage_overlay(data, failed_ids)
+offline_ids = set(overlay["offline_nodes"])
+dashboard = simulation_dashboard(data, failed_ids)
 a, b, c, d = st.columns(4)
-a.metric("Nodes", len(nodes))
-b.metric("Links", len(links))
-c.metric("Connected groups", summary["components"])
-d.metric("Average battery", f"{sum(n['battery'] for n in nodes)/len(nodes):.0f}%")
+a.metric("Online nodes", f"{dashboard['online_nodes']} / {dashboard['total_nodes']}")
+b.metric("Active links", dashboard["active_links"])
+c.metric("Connected groups", dashboard["connected_groups"])
+d.metric("Largest group", f"{dashboard['largest_group_pct']:.0f}%")
+with st.expander("Connectivity and vulnerability details"):
+    st.caption("Largest group percentage is the share of online nodes in the largest connected component.")
+    st.write(f"Offline nodes: {dashboard['offline_nodes']} · Critical nodes: {dashboard['critical_nodes']} · Bridge links: {dashboard['bridge_links']}")
+    st.caption("Graph metrics are synthetic and do not predict actual RF performance.")
 
 workspace_network, workspace_resilience, workspace_analysis, workspace_scenarios = st.tabs(
     ["🕸️ Network", "🛡️ Resilience", "📈 Analysis", "💾 Scenarios"]
@@ -106,16 +119,13 @@ workspace_network, workspace_resilience, workspace_analysis, workspace_scenarios
 with workspace_network:
     st.subheader("Network overview")
     st.caption("Use the outage selector to explore how failures affect the topology. Orange outlines mark graph weak points.")
-    failed_names = st.multiselect("Simulate offline nodes", [n["name"] for n in nodes],
-                                  help="Offline nodes are greyed out and their links disappear from the active topology.")
-    failed_ids = [n["node_id"] for n in nodes if n["name"] in failed_names]
-    overlay = outage_overlay(data, failed_ids)
-    offline_ids = set(overlay["offline_nodes"])
     st.caption(f"Active topology: {len(overlay['online_nodes'])} nodes, {len(overlay['active_links'])} links, {overlay['state']['components']} connected groups.")
     node_by_id = {n["node_id"]: n for n in nodes}
     fig = go.Figure()
     weak = weak_points(data)
     highlight_weak = st.toggle("Highlight critical nodes and bridge links", value=True)
+    show_labels = st.toggle("Show node labels", value=True)
+    show_route = st.toggle("Highlight selected route", value=True)
     bridge_links = set(weak["bridge_links"]) if highlight_weak else set()
     critical_ids = set(weak["critical_nodes"]) if highlight_weak else set()
     for link in overlay["active_links"]:
@@ -128,7 +138,7 @@ with workspace_network:
             hoverinfo="skip", showlegend=False))
     fig.add_trace(go.Scatter(
         x=[n["x"] for n in nodes], y=[n["y"] for n in nodes],
-        mode="markers+text", text=[n["name"] for n in nodes],
+        mode="markers+text" if show_labels else "markers", text=[n["name"] for n in nodes],
         textposition="top center", customdata=[[n["node_id"], n["battery"]] for n in nodes],
         marker=dict(size=[23 if n["node_id"] in critical_ids and n["node_id"] not in offline_ids else 16 for n in nodes],
                     color=[n["battery"] if n["node_id"] not in offline_ids else -1 for n in nodes],
@@ -138,11 +148,11 @@ with workspace_network:
                               color=["#ff9f43" if n["node_id"] in critical_ids and n["node_id"] not in offline_ids else "#d8e5ef" for n in nodes])),
         hovertemplate="%{text}<br>ID: %{customdata[0]}<br>Battery: %{customdata[1]}%<extra></extra>",
         showlegend=False))
-    fig.update_layout(template="plotly_dark", height=530, margin=dict(l=15,r=15,t=15,b=15),
+    fig.update_layout(template="plotly_dark", height=470, margin=dict(l=5,r=5,t=5,b=5),
                       xaxis=dict(title="Synthetic X", range=[-0.5, 10.5]),
                       yaxis=dict(title="Synthetic Y", range=[-0.5, 10.5],
                                  scaleanchor="x", scaleratio=1))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": False})
     st.caption("Synthetic coordinates and illustrative links; this is not a geographic map or validated RF model.")
     st.caption("Grey nodes are offline in the selected scenario; only active links are drawn.")
     st.caption(f"Graph weak points: {weak['critical_node_count']} critical node(s), {weak['bridge_link_count']} bridge link(s). Orange highlights show graph vulnerabilities, not measured RF risk.")
@@ -167,6 +177,19 @@ with workspace_network:
     else:
         id_to_name = {v:k for k,v in names.items()}
         st.success(" → ".join(id_to_name[n] for n in route))
+        if show_route and len(route) > 1:
+            route_x = [node_by_id[node]["x"] for node in route]
+            route_y = [node_by_id[node]["y"] for node in route]
+            route_fig = go.Figure()
+            route_fig.add_trace(go.Scatter(x=route_x, y=route_y, mode="lines+markers+text",
+                text=[id_to_name[node] for node in route], textposition="top center",
+                line=dict(color="#ffca65", width=4), marker=dict(size=12, color="#ffca65"),
+                hovertemplate="%{text}<extra></extra>"))
+            route_fig.update_layout(template="plotly_dark", height=260,
+                margin=dict(l=5,r=5,t=5,b=5), showlegend=False,
+                xaxis=dict(range=[-0.5, 10.5], title="Synthetic X"),
+                yaxis=dict(range=[-0.5, 10.5], title="Synthetic Y", scaleanchor="x", scaleratio=1))
+            st.plotly_chart(route_fig, use_container_width=True, config={"displaylogo": False})
         st.caption(f"{len(route)-1} simulated hop(s); routing is shortest-hop graph analysis, "
                    "not a reproduction of Meshtastic firmware routing.")
 
