@@ -8,6 +8,10 @@ Simulation-first Meshtastic-style mesh network explorer built with Python and St
 
 The simulation dashboard groups tools into four tabs: **Network** (topology and routes), **Resilience** (outages and recovery), **Analysis** (timeline and reliability), and **Scenarios** (save, compare and export). Select a tab to focus on one task without scrolling through the entire dashboard.
 
+## v1.1 release
+
+The v1.1 network-planning milestone adds a compact, outage-aware simulation summary, shared offline-node controls across tabs, optional node labels, and route highlighting. See [v1.1 release notes and validation checklist](docs/RELEASE_NOTES_V1_1.md). The simulation is illustrative rather than an RF prediction.
+
 ## Features
 
 - Deterministic synthetic virtual nodes, adjustable radio range and seed
