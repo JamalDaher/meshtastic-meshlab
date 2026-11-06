@@ -8,6 +8,7 @@ Simulation-first Meshtastic-style mesh network explorer built with Python and St
 - Interactive network graph, synthetic signal metrics and shortest-hop route explorer
 - Node-outage resilience lab and critical bridge-node identification
 - Optional orange highlights for critical nodes and bridge links on the topology graph
+- Interactive node-outage overlays: grey offline nodes and remove their links from the active diagram
 - Reproducible simulated event timeline with outage/recovery charts and CSV export
 - Single-node reliability comparisons and illustrative range analysis
 - Portable JSON simulation report with parameters, network data, and resilience summary
