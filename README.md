@@ -16,6 +16,10 @@ The v1.1 network-planning milestone adds a compact, outage-aware simulation summ
 
 The Network tab includes an independent **ideal free-space RF link budget explorer** with configurable frequency, transmit power, antenna gains, cable losses, receiver sensitivity and link distance. It reports free-space path loss, estimated received power and margin. The calculations do **not** yet drive synthetic network connectivity, and are not terrain-aware or validated LoRa coverage predictions.
 
+## RF connectivity mode (v1.2 development)
+
+Simulation settings can switch between the original distance threshold and an **ideal free-space RF threshold**. The RF mode uses an explicit kilometers-per-synthetic-unit scale and configurable frequency, TX power, antenna gains, cable loss and receiver sensitivity. Link tables include estimated path loss, received power and link margin. This is an idealized estimate, not calibrated coverage. Timeline, range comparisons, saved scenarios and JSON reports still use the original distance model; their exports do not yet preserve RF settings.
+
 ## Features
 
 - Deterministic synthetic virtual nodes, adjustable radio range and seed

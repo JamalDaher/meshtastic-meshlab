@@ -15,6 +15,7 @@ from meshlab.outage_overlay import outage_overlay
 from meshlab.recovery import recovery_options, recovery_sequence
 from meshlab.dashboard import simulation_dashboard
 from meshlab.rf import RadioProfile, link_budget
+from meshlab.rf_simulator import simulate_rf
 
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
@@ -31,7 +32,18 @@ with st.sidebar:
         with st.expander("Simulation settings", expanded=False):
             count = st.slider("Virtual nodes", 2, 30, 10)
             seed = st.number_input("Simulation seed", 0, 100000, 42)
-            radius = st.slider("Illustrative radio range", 1.0, 10.0, 5.0, 0.5)
+            connectivity_mode = st.radio("Connectivity model", ["Distance threshold", "Ideal free-space RF"])
+            if connectivity_mode == "Distance threshold":
+                radius = st.slider("Illustrative radio range", 1.0, 10.0, 5.0, 0.5)
+            else:
+                km_per_unit = st.number_input("Kilometers per synthetic coordinate unit",
+                                              min_value=0.01, max_value=100.0, value=0.5)
+                rf_frequency = st.number_input("RF frequency (MHz)", 1.0, 10000.0, 906.875)
+                rf_tx_power = st.number_input("RF transmit power (dBm)", -30.0, 40.0, 22.0)
+                rf_sensitivity = st.number_input("RF receiver sensitivity (dBm)", -160.0, -50.0, -130.0)
+                rf_tx_gain = st.number_input("RF TX antenna gain (dBi)", -20.0, 40.0, 2.0)
+                rf_rx_gain = st.number_input("RF RX antenna gain (dBi)", -20.0, 40.0, 2.0)
+                rf_cable_loss = st.number_input("RF total cable loss (dB)", 0.0, 100.0, 0.0)
 if mode != "Simulation":
     from meshlab.monitor import Monitor
     from meshlab.gateway import RadioGateway
@@ -91,7 +103,16 @@ if mode != "Simulation":
                "No message text, payload or position is retained.")
     st.stop()
 
-data = simulate(count, int(seed), radius)
+radius = 5.0  # Legacy distance-model scenario and report tools retain their own range.
+if connectivity_mode == "Ideal free-space RF":
+    profile = RadioProfile(frequency_mhz=rf_frequency, tx_power_dbm=rf_tx_power,
+                           tx_gain_dbi=rf_tx_gain, rx_gain_dbi=rf_rx_gain,
+                           cable_loss_db=rf_cable_loss, receiver_sensitivity_dbm=rf_sensitivity)
+    data = simulate_rf(count, int(seed), km_per_unit, profile)
+    st.caption("Connectivity: ideal free-space RF threshold. Synthetic coordinate spacing is scaled to km; no terrain, fading, or LoRa packet modeling.")
+    st.info("Timeline, range comparisons, saved scenarios and JSON report still use the legacy distance model. RF settings are not included in those exports yet.")
+else:
+    data = simulate(count, int(seed), radius)
 nodes, links = data["nodes"], data["links"]
 graph = build_graph(data)
 summary = network_summary(graph)
@@ -176,6 +197,8 @@ with workspace_network:
                                  scaleanchor="x", scaleratio=1))
     st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": False})
     st.caption("Synthetic coordinates and illustrative links; this is not a geographic map or validated RF model.")
+    if connectivity_mode == "Ideal free-space RF" and links:
+        st.dataframe(pd.DataFrame(links)[["source", "target", "distance_km", "path_loss_db", "rssi", "link_margin_db"]], hide_index=True, use_container_width=True)
     st.caption("Grey nodes are offline in the selected scenario; only active links are drawn.")
     st.caption(f"Graph weak points: {weak['critical_node_count']} critical node(s), {weak['bridge_link_count']} bridge link(s). Orange highlights show graph vulnerabilities, not measured RF risk.")
 
