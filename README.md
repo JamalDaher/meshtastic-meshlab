@@ -17,6 +17,10 @@ Simulation-first Meshtastic-style mesh network explorer built with Python and St
 - Experimental local USB/TCP Meshtastic radio metadata monitoring, signal history, and CSV export
 - Automated unit tests via GitHub Actions
 
+## Hosted Streamlit deployment
+
+MeshLab can run as a simulation-first app on Streamlit Community Cloud. See [deployment instructions](docs/STREAMLIT_DEPLOYMENT.md). For hosted demos, set `MESHLAB_SIMULATION_ONLY=1` to hide local radio connection controls. The hosted URL is assigned by Streamlit after deployment.
+
 ## Quick start
 
 Requires Python 3.11+.
