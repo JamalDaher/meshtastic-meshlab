@@ -36,7 +36,7 @@ The Scenarios tab now includes a geographic planning section with editable node 
 
 ## Terrain line-of-sight preview (v1.3)
 
-A manual elevation-profile tool in Scenarios accepts ordered distance/elevation samples, antenna heights and reports geometric terrain clearance with an approximate effective Earth-radius correction. It can optionally fetch elevation samples from the public Open-Meteo elevation API when the user explicitly clicks Fetch; selected geographic coordinates are sent to that service, incorporate Fresnel-zone clearance, or account for vegetation/buildings. Results are only as reliable as the supplied samples.
+A manual elevation-profile tool in Scenarios accepts ordered distance/elevation samples, antenna heights and reports geometric terrain clearance with an approximate effective Earth-radius correction. It can optionally fetch elevation samples from the public Open-Meteo elevation API when the user explicitly clicks Fetch; selected geographic coordinates are sent to that service, account for vegetation/buildings. The panel also estimates first Fresnel-zone clearance at sampled points with adjustable frequency and required clearance percentage; this is not a diffraction or propagation model. Results are only as reliable as the supplied samples.
 
 ## Features
 
