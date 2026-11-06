@@ -12,13 +12,13 @@ The simulation dashboard groups tools into four tabs: **Network** (topology and 
 
 The v1.1 network-planning milestone adds a compact, outage-aware simulation summary, shared offline-node controls across tabs, optional node labels, and route highlighting. See [v1.1 release notes and validation checklist](docs/RELEASE_NOTES_V1_1.md). The simulation is illustrative rather than an RF prediction.
 
-## v1.2 RF planning (in development)
+## v1.2 Advanced RF Planning
 
-The Network tab includes an independent **ideal free-space RF link budget explorer** with configurable frequency, transmit power, antenna gains, cable losses, receiver sensitivity and link distance. It reports free-space path loss, estimated received power and margin. The calculations do **not** yet drive synthetic network connectivity, and are not terrain-aware or validated LoRa coverage predictions.
+The Network tab includes an independent **ideal free-space RF link budget explorer** with configurable frequency, transmit power, antenna gains, cable losses, receiver sensitivity and link distance. It reports free-space path loss, estimated received power and margin. The independent explorer does not change topology; the separate selectable RF connectivity mode does. Neither is terrain-aware or a validated LoRa coverage prediction.
 
-## RF connectivity mode (v1.2 development)
+## RF connectivity mode
 
-Simulation settings can switch between the original distance threshold and an **ideal free-space RF threshold**. The RF mode uses an explicit kilometers-per-synthetic-unit scale and configurable frequency, TX power, antenna gains, cable loss and receiver sensitivity. Link tables include estimated path loss, received power and link margin. This is an idealized estimate, not calibrated coverage. Timeline, range comparisons, saved scenarios and JSON reports still use the original distance model; their exports do not yet preserve RF settings.
+Simulation settings can switch between the original distance threshold and an **ideal free-space RF threshold**. The RF mode uses an explicit kilometers-per-synthetic-unit scale and configurable frequency, TX power, antenna gains, cable loss and receiver sensitivity. Link tables include estimated path loss, received power and link margin. This is an idealized estimate, not calibrated coverage. Timeline and range comparisons still use the original distance model. Dedicated RF scenario and report exports preserve RF settings separately from legacy exports.
 
 ## RF margin visualization
 
@@ -27,6 +27,8 @@ In ideal free-space RF mode, the Network topology can color active links by esti
 ## RF presets and reports
 
 In ideal RF connectivity mode, the Scenarios tab can download a versioned RF settings preset and a reproducible RF simulation report containing the selected radio profile, coordinate scale, computed network links, link margins and graph summary. Uploaded RF presets can be validated and inspected, and applied to the current simulation with **Apply RF scenario to simulation** (up to the dashboard limit of 30 nodes). Legacy distance-model presets and reports remain separate for backward compatibility.
+
+See [v1.2 release notes and validation checklist](docs/RELEASE_NOTES_V1_2.md) before publishing the v1.2.0 release.
 
 ## Features
 
