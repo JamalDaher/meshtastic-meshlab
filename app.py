@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from meshlab.simulator import simulate
 from meshlab.topology import build_graph, shortest_route, network_summary
+from meshlab.resilience import analyze_failure, critical_nodes
 
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
@@ -123,6 +124,27 @@ else:
     st.success(" → ".join(id_to_name[n] for n in route))
     st.caption(f"{len(route)-1} simulated hop(s); routing is shortest-hop graph analysis, "
                "not a reproduction of Meshtastic firmware routing.")
+
+st.subheader("Network resilience lab")
+st.caption("Remove virtual nodes to explore network fragmentation. This is graph analysis, not a real-world RF or packet-delivery prediction.")
+critical = critical_nodes(data)
+id_to_label = {n["node_id"]: n["name"] for n in nodes}
+st.write("Critical bridge nodes:", ", ".join(id_to_label[n] for n in critical) if critical else "None")
+failed_names = st.multiselect("Simulate offline nodes", [n["name"] for n in nodes])
+failed_ids = [n["node_id"] for n in nodes if n["name"] in failed_names]
+failure = analyze_failure(data, failed_ids)
+r1, r2, r3 = st.columns(3)
+r1.metric("Remaining nodes", failure["remaining_nodes"])
+r2.metric("Remaining links", failure["remaining_links"])
+r3.metric("Connected groups", failure["components"],
+          delta=failure["components"] - failure["baseline_components"],
+          delta_color="inverse")
+if failure["groups"]:
+    st.write("Connected groups after failure:")
+    for i, group in enumerate(failure["groups"], start=1):
+        st.write(f"Group {i}: " + ", ".join(id_to_label[n] for n in group))
+else:
+    st.info("No nodes remain in this scenario.")
 
 tab1, tab2 = st.tabs(["Nodes", "Links"])
 with tab1:
