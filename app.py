@@ -1,4 +1,5 @@
 """MeshLab interactive simulation dashboard."""
+import os
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -18,7 +19,11 @@ st.title("📡 MeshLab")
 st.caption("Mesh network simulation and monitoring • privacy-first")
 with st.sidebar:
     st.header("Workspace")
-    mode = st.radio("Data source", ["Simulation", "Live radio (local only)"])
+    hosted = os.environ.get("MESHLAB_SIMULATION_ONLY", "").lower() in {"1", "true", "yes"}
+    modes = ["Simulation"] if hosted else ["Simulation", "Live radio (local only)"]
+    mode = st.radio("Data source", modes)
+    if hosted:
+        st.caption("Hosted demo: simulation only. Connect physical radios using a local installation.")
     if mode == "Simulation":
         with st.expander("Simulation settings", expanded=True):
             count = st.slider("Virtual nodes", 2, 30, 10)
