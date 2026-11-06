@@ -1,5 +1,7 @@
 # 📡 MeshLab
 
+**[Launch MeshLab — Live Streamlit App](https://meshlab.streamlit.app/)**
+
 Simulation-first Meshtastic-style mesh network explorer built with Python and Streamlit. Independent community project, not affiliated with Meshtastic.
 
 ## Features
@@ -19,7 +21,7 @@ Simulation-first Meshtastic-style mesh network explorer built with Python and St
 
 ## Hosted Streamlit deployment
 
-MeshLab can run as a simulation-first app on Streamlit Community Cloud. See [deployment instructions](docs/STREAMLIT_DEPLOYMENT.md). For hosted demos, set `MESHLAB_SIMULATION_ONLY=1` to hide local radio connection controls. The hosted URL is assigned by Streamlit after deployment.
+MeshLab is deployed at **https://meshlab.streamlit.app/** and can run as a simulation-first app on Streamlit Community Cloud. See [deployment instructions](docs/STREAMLIT_DEPLOYMENT.md). For hosted demos, set `MESHLAB_SIMULATION_ONLY=1` to hide local radio connection controls. The hosted URL is assigned by Streamlit after deployment.
 
 ## Quick start
 
