@@ -7,6 +7,7 @@ from meshlab.topology import build_graph, shortest_route, network_summary
 from meshlab.resilience import analyze_failure, critical_nodes
 from meshlab.timeline import generate_timeline
 from meshlab.reliability import single_node_impact, range_comparison
+from meshlab.report import build_report, export_json
 
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
@@ -14,9 +15,11 @@ st.caption("Mesh network simulation and monitoring • privacy-first")
 with st.sidebar:
     st.header("Workspace")
     mode = st.radio("Data source", ["Simulation", "Live radio (local only)"])
-    count = st.slider("Virtual nodes", 2, 30, 10)
-    seed = st.number_input("Simulation seed", 0, 100000, 42)
-    radius = st.slider("Illustrative radio range", 1.0, 10.0, 5.0, 0.5)
+    if mode == "Simulation":
+        with st.expander("Simulation settings", expanded=True):
+            count = st.slider("Virtual nodes", 2, 30, 10)
+            seed = st.number_input("Simulation seed", 0, 100000, 42)
+            radius = st.slider("Illustrative radio range", 1.0, 10.0, 5.0, 0.5)
 if mode != "Simulation":
     from meshlab.monitor import Monitor
     from meshlab.gateway import RadioGateway
@@ -176,6 +179,12 @@ comparison_df = pd.DataFrame(range_comparison(count, int(seed), range_values))
 st.write("Illustrative range comparison (same node positions)")
 st.line_chart(comparison_df, x="range", y=["links", "connected_groups"], height=260)
 st.dataframe(comparison_df, hide_index=True, use_container_width=True)
+
+st.subheader("Reproducible simulation report")
+st.caption("Download the simulation inputs, topology, connectivity summary, and node impact as JSON.")
+st.download_button("Download simulation report JSON",
+                   export_json(build_report(count, int(seed), radius)),
+                   file_name="meshlab-simulation-report.json", mime="application/json")
 
 tab1, tab2 = st.tabs(["Nodes", "Links"])
 with tab1:
