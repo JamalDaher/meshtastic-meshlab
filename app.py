@@ -21,6 +21,7 @@ from meshlab.rf_exports import encode_rf_scenario, decode_rf_scenario, build_rf_
 from meshlab.geo import geographic_links, validate_nodes
 from meshlab.coverage import theoretical_radius_km, coverage_ring
 from meshlab.terrain import analyze_terrain_profile
+from meshlab.fresnel import analyze_fresnel_clearance
 from meshlab.elevation import sample_geographic_path, fetch_elevations
 
 def apply_rf_preset(settings):
@@ -514,10 +515,21 @@ with workspace_scenarios:
             terrain_result = analyze_terrain_profile(terrain_samples, tx_h, rx_h)
             st.metric("Minimum interior terrain clearance", f"{terrain_result['minimum_interior_clearance_m']:.1f} m")
             st.write("Geometric line of sight:", "Clear" if terrain_result["clear_line_of_sight"] else "Obstructed")
-            profile_df = pd.DataFrame(terrain_result["samples"])
+            fresnel_frequency = st.number_input("Fresnel analysis frequency (MHz)", min_value=1.0,
+                                                max_value=10000.0, value=906.875, key="terrain_fresnel_freq")
+            fresnel_fraction = st.slider("Required first Fresnel-zone clearance (%)",
+                                         0, 100, 60, 5, key="terrain_fresnel_fraction")
+            fresnel_result = analyze_fresnel_clearance(terrain_result, fresnel_frequency,
+                                                       fresnel_fraction / 100)
+            st.metric("Minimum Fresnel clearance margin",
+                      f"{fresnel_result['minimum_fresnel_margin_m']:.1f} m")
+            st.write("First Fresnel-zone clearance:",
+                     "Clear at sampled points" if fresnel_result["fresnel_clear"] else "Insufficient at sampled points")
+            profile_df = pd.DataFrame(fresnel_result["samples"])
             st.line_chart(profile_df.set_index("distance_km")[["terrain_elevation_m", "sightline_elevation_m"]])
+            st.line_chart(profile_df.set_index("distance_km")[["clearance_m", "required_clearance_m"]])
             st.dataframe(profile_df, hide_index=True, use_container_width=True)
-            st.caption("Earth curvature uses an approximate 4/3 effective Earth radius. Clearance calculations include curvature, while the simple line chart does not plot the curvature bulge. Fresnel clearance and clutter are not modeled.")
+            st.caption("Earth curvature uses an approximate 4/3 effective Earth radius. Clearance calculations include curvature, while the simple line chart does not plot the curvature bulge. Fresnel-zone clearance is estimated at supplied sample points only; the second chart compares actual clearance against the required Fresnel clearance. Clutter and diffraction are not modeled.")
         except (ValueError, TypeError) as exc:
             st.warning(f"Invalid terrain profile: {exc}")
 
