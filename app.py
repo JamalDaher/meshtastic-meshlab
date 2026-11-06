@@ -421,13 +421,41 @@ with workspace_scenarios:
                                    receiver_sensitivity_dbm=geo_sensitivity, tx_gain_dbi=geo_tx_gain,
                                    rx_gain_dbi=geo_rx_gain, cable_loss_db=geo_loss)
         geo_links = geographic_links(geo_nodes, geo_profile)
-        st.map(pd.DataFrame(geo_nodes).rename(columns={"lon": "longitude", "lat": "latitude"}),
-               latitude="latitude", longitude="longitude", size=80)
+        geo_by_name = {n["name"]: n for n in geo_nodes}
+        geo_fig = go.Figure()
+        show_below = st.toggle("Show below-sensitivity links", value=False, key="geo_show_below")
+        for geo_link in geo_links:
+            if not geo_link["above_sensitivity"] and not show_below:
+                continue
+            start = geo_by_name[geo_link["source"]]
+            end = geo_by_name[geo_link["target"]]
+            margin = geo_link["link_margin_db"]
+            geo_fig.add_trace(go.Scattermapbox(
+                lat=[start["lat"], end["lat"]], lon=[start["lon"], end["lon"]],
+                mode="lines",
+                line=dict(width=3, color=margin_color(margin)),
+                hoverinfo="text",
+                text=[f"{geo_link['source']} → {geo_link['target']}: {geo_link['distance_km']:.2f} km, {margin:+.1f} dB margin"] * 2,
+                showlegend=False))
+        geo_fig.add_trace(go.Scattermapbox(
+            lat=[n["lat"] for n in geo_nodes], lon=[n["lon"] for n in geo_nodes],
+            mode="markers+text", text=[n["name"] for n in geo_nodes],
+            textposition="top right", marker=dict(size=13, color="#3178c6"),
+            hoverinfo="text", hovertext=[n["name"] for n in geo_nodes],
+            showlegend=False))
+        geo_fig.update_layout(
+            mapbox=dict(style="open-street-map",
+                        center=dict(lat=sum(n["lat"] for n in geo_nodes) / len(geo_nodes),
+                                    lon=sum(n["lon"] for n in geo_nodes) / len(geo_nodes)),
+                        zoom=10),
+            margin=dict(l=0, r=0, t=0, b=0), height=470)
+        st.plotly_chart(geo_fig, use_container_width=True)
+        st.caption("Link colors: teal ≥15 dB, amber 6–15 dB, red 0–6 dB, gray below sensitivity. Zoom and pan the map to inspect nodes.")
         st.write("Estimated pairwise geographic links")
         st.dataframe(pd.DataFrame(geo_links), hide_index=True, use_container_width=True)
         st.download_button("Export geographic links CSV", pd.DataFrame(geo_links).to_csv(index=False),
                            file_name="meshlab-geographic-links.csv", mime="text/csv")
-        st.caption("Map shows node positions, not coverage. No terrain, obstruction, fading or interference is modeled.")
+        st.caption("Lines represent ideal free-space link-budget estimates, not measured links or coverage. No terrain, obstruction, fading or interference is modeled.")
     except (ValueError, TypeError) as exc:
         st.warning(f"Geographic planner: {exc}")
 
