@@ -20,6 +20,10 @@ The Network tab includes an independent **ideal free-space RF link budget explor
 
 Simulation settings can switch between the original distance threshold and an **ideal free-space RF threshold**. The RF mode uses an explicit kilometers-per-synthetic-unit scale and configurable frequency, TX power, antenna gains, cable loss and receiver sensitivity. Link tables include estimated path loss, received power and link margin. This is an idealized estimate, not calibrated coverage. Timeline, range comparisons, saved scenarios and JSON reports still use the original distance model; their exports do not yet preserve RF settings.
 
+## RF margin visualization
+
+In ideal free-space RF mode, the Network topology can color active links by estimated link margin: red (0–6 dB), amber (6–15 dB), and teal (15 dB and above). Hover to see the modeled margin. Links below receiver sensitivity are not drawn. These thresholds are illustrative, not calibrated reliability predictions. Disable margin coloring to show orange graph bridge links instead.
+
 ## Features
 
 - Deterministic synthetic virtual nodes, adjustable radio range and seed
