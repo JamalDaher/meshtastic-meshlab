@@ -3,9 +3,9 @@ from meshlab.resilience import analyze_failure, critical_nodes
 
 def example():
     return {"nodes": [{"node_id": n} for n in ("a", "b", "c", "d")],
-            "links": [{"source": "a", "target": "b"},
-                      {"source": "b", "target": "c"},
-                      {"source": "c", "target": "d"}]}
+            "links": [{"source": "a", "target": "b", "snr": 5, "rssi": -80, "distance": 1},
+                      {"source": "b", "target": "c", "snr": 5, "rssi": -80, "distance": 1},
+                      {"source": "c", "target": "d", "snr": 5, "rssi": -80, "distance": 1}]}
 
 def test_bridge_node_disconnects():
     assert critical_nodes(example()) == ["b", "c"]
@@ -29,6 +29,6 @@ def test_unknown_node_rejected():
 
 def test_no_critical_nodes_in_triangle():
     data = example()
-    data["links"].append({"source": "a", "target": "c"})
-    data["links"].append({"source": "a", "target": "d"})
+    data["links"].append({"source": "a", "target": "c", "snr": 5, "rssi": -80, "distance": 1})
+    data["links"].append({"source": "a", "target": "d", "snr": 5, "rssi": -80, "distance": 1})
     assert critical_nodes(data) == []
