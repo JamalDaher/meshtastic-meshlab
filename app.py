@@ -21,6 +21,7 @@ from meshlab.rf_exports import encode_rf_scenario, decode_rf_scenario, build_rf_
 from meshlab.geo import geographic_links, validate_nodes
 from meshlab.coverage import theoretical_radius_km, coverage_ring
 from meshlab.terrain import analyze_terrain_profile
+from meshlab.elevation import sample_geographic_path, fetch_elevations
 
 def apply_rf_preset(settings):
     """Button callback runs before widget construction on the next rerun."""
@@ -479,6 +480,25 @@ with workspace_scenarios:
 
     with st.expander("Terrain line-of-sight profile · v1.3 preview"):
         st.caption("Paste sampled ground elevations (distance_km,elevation_m). This does not download terrain data.")
+        st.caption("Optional: select two geographic nodes and request elevations from Open-Meteo. Node coordinates will be sent to that service.")
+        if "geo_nodes" in st.session_state:
+            node_names = [n["name"] for n in geo_nodes] if "geo_nodes" in locals() else []
+            if len(node_names) >= 2:
+                terrain_start = st.selectbox("Elevation path start", node_names, index=0, key="terrain_start")
+                terrain_end = st.selectbox("Elevation path end", node_names, index=1, key="terrain_end")
+                terrain_points = st.slider("Elevation sample points", 2, 100, 21, key="terrain_points")
+                if st.button("Fetch elevation profile", key="terrain_fetch"):
+                    try:
+                        start_node = next(n for n in geo_nodes if n["name"] == terrain_start)
+                        end_node = next(n for n in geo_nodes if n["name"] == terrain_end)
+                        path = sample_geographic_path(start_node["lat"], start_node["lon"],
+                                                      end_node["lat"], end_node["lon"], terrain_points)
+                        elevations = fetch_elevations(path)
+                        st.session_state["terrain_samples"] = "\\n".join(
+                            f"{distance:.6f},{height:.2f}" for distance, height in elevations)
+                        st.success("Elevation samples loaded. Review the profile below.")
+                    except (ValueError, OSError, TimeoutError) as exc:
+                        st.error(f"Elevation lookup failed: {exc}")
         profile_csv = st.text_area("Elevation samples (km, meters above sea level)",
                                    value="0,100\\n0.5,100\\n1,100", key="terrain_samples")
         tx_h = st.number_input("TX antenna height above ground (m)", 0.0, 1000.0, 5.0, key="terrain_tx_height")
