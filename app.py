@@ -17,6 +17,7 @@ from meshlab.dashboard import simulation_dashboard
 from meshlab.rf import RadioProfile, link_budget
 from meshlab.rf_simulator import simulate_rf
 from meshlab.rf_coverage import margin_color, margin_category, coverage_summary
+from meshlab.rf_exports import encode_rf_scenario, decode_rf_scenario, build_rf_report
 
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
@@ -317,8 +318,28 @@ with workspace_analysis:
     st.dataframe(comparison_df, hide_index=True, use_container_width=True)
 
 with workspace_scenarios:
+    if connectivity_mode == "Ideal free-space RF":
+        from dataclasses import asdict
+        rf_settings = {"count": count, "seed": int(seed), "km_per_unit": km_per_unit,
+                       "profile": asdict(profile)}
+        st.subheader("RF scenario and report exports")
+        st.caption("These exports include the active ideal RF settings and calculated RF topology.")
+        st.download_button("Save RF scenario JSON", encode_rf_scenario(rf_settings),
+                           file_name="meshlab-rf-scenario.json", mime="application/json")
+        st.download_button("Download RF simulation report JSON",
+                           export_json(build_rf_report(rf_settings)),
+                           file_name="meshlab-rf-report.json", mime="application/json")
+        rf_uploaded = st.file_uploader("Inspect saved RF scenario", type=["json"], key="rf_scenario_upload")
+        if rf_uploaded is not None:
+            try:
+                restored = decode_rf_scenario(rf_uploaded.getvalue().decode("utf-8"))
+                st.success("Valid RF scenario. Its settings are shown below for manual application.")
+                st.json(restored)
+            except (ValueError, UnicodeError) as exc:
+                st.error(f"Invalid RF scenario: {exc}")
+        st.divider()
     st.subheader("Scenario planner")
-    st.caption("Save simulation settings, reload them later, and compare two synthetic network configurations.")
+    st.caption("Legacy distance-model scenario tools are shown below. RF presets and reports are separate and versioned.")
     current_scenario = {"count": count, "seed": int(seed), "radius": float(radius)}
     st.download_button("Save current scenario JSON", encode_scenario(current_scenario),
                        file_name="meshlab-scenario.json", mime="application/json")
