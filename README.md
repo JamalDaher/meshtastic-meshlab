@@ -12,6 +12,10 @@ The simulation dashboard groups tools into four tabs: **Network** (topology and 
 
 The v1.1 network-planning milestone adds a compact, outage-aware simulation summary, shared offline-node controls across tabs, optional node labels, and route highlighting. See [v1.1 release notes and validation checklist](docs/RELEASE_NOTES_V1_1.md). The simulation is illustrative rather than an RF prediction.
 
+## v1.2 RF planning (in development)
+
+The Network tab includes an independent **ideal free-space RF link budget explorer** with configurable frequency, transmit power, antenna gains, cable losses, receiver sensitivity and link distance. It reports free-space path loss, estimated received power and margin. The calculations do **not** yet drive synthetic network connectivity, and are not terrain-aware or validated LoRa coverage predictions.
+
 ## Features
 
 - Deterministic synthetic virtual nodes, adjustable radio range and seed

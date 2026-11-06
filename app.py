@@ -14,6 +14,7 @@ from meshlab.weak_points import weak_points
 from meshlab.outage_overlay import outage_overlay
 from meshlab.recovery import recovery_options, recovery_sequence
 from meshlab.dashboard import simulation_dashboard
+from meshlab.rf import RadioProfile, link_budget
 
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
@@ -117,6 +118,27 @@ workspace_network, workspace_resilience, workspace_analysis, workspace_scenarios
 )
 
 with workspace_network:
+    with st.expander("RF link budget explorer · ideal free space", expanded=False):
+        st.caption("Independent analytical estimate; does not change synthetic topology or LoRa packet-delivery behavior.")
+        rf1, rf2 = st.columns(2)
+        with rf1:
+            frequency = st.number_input("Frequency (MHz)", min_value=1.0, max_value=10000.0, value=906.875, step=0.125)
+            tx_power = st.number_input("Transmit power (dBm)", min_value=-30.0, max_value=40.0, value=22.0)
+            distance = st.number_input("Link distance (km)", min_value=0.001, max_value=1000.0, value=1.0)
+        with rf2:
+            tx_gain = st.number_input("Transmit antenna gain (dBi)", min_value=-20.0, max_value=40.0, value=2.0)
+            rx_gain = st.number_input("Receive antenna gain (dBi)", min_value=-20.0, max_value=40.0, value=2.0)
+            cable_loss = st.number_input("Total cable loss (dB)", min_value=0.0, max_value=100.0, value=0.0)
+            sensitivity = st.number_input("Receiver sensitivity (dBm)", min_value=-160.0, max_value=-50.0, value=-130.0)
+        rf_profile = RadioProfile(frequency_mhz=frequency, tx_power_dbm=tx_power,
+                                  tx_gain_dbi=tx_gain, rx_gain_dbi=rx_gain,
+                                  cable_loss_db=cable_loss, receiver_sensitivity_dbm=sensitivity)
+        budget = link_budget(distance, rf_profile)
+        rf_a, rf_b, rf_c = st.columns(3)
+        rf_a.metric("Free-space loss", f"{budget['path_loss_db']:.1f} dB")
+        rf_b.metric("Received power", f"{budget['received_power_dbm']:.1f} dBm")
+        rf_c.metric("Link margin", f"{budget['link_margin_db']:+.1f} dB")
+        st.caption("Ideal unobstructed line-of-sight estimate only. Terrain, fading, polarization, interference, regional rules, and LoRa settings are not modeled.")
     st.subheader("Network overview")
     st.caption("Use the outage selector to explore how failures affect the topology. Orange outlines mark graph weak points.")
     st.caption(f"Active topology: {len(overlay['online_nodes'])} nodes, {len(overlay['active_links'])} links, {overlay['state']['components']} connected groups.")
