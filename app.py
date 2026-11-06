@@ -16,7 +16,8 @@ from meshlab.recovery import recovery_options, recovery_sequence
 
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
-st.caption("Mesh network simulation and monitoring • privacy-first")
+st.caption("Explore simulated mesh connectivity, failures and recovery • privacy-first")
+st.markdown("**[Open live app](https://meshlab.streamlit.app/) · [Source code](https://github.com/JamalDaher/meshtastic-meshlab) · Simulation data is illustrative, not measured RF performance.")
 with st.sidebar:
     st.header("Workspace")
     hosted = os.environ.get("MESHLAB_SIMULATION_ONLY", "").lower() in {"1", "true", "yes"}
@@ -25,7 +26,7 @@ with st.sidebar:
     if hosted:
         st.caption("Hosted demo: simulation only. Connect physical radios using a local installation.")
     if mode == "Simulation":
-        with st.expander("Simulation settings", expanded=True):
+        with st.expander("Simulation settings", expanded=False):
             count = st.slider("Virtual nodes", 2, 30, 10)
             seed = st.number_input("Simulation seed", 0, 100000, 42)
             radius = st.slider("Illustrative radio range", 1.0, 10.0, 5.0, 0.5)
@@ -98,7 +99,8 @@ b.metric("Links", len(links))
 c.metric("Connected groups", summary["components"])
 d.metric("Average battery", f"{sum(n['battery'] for n in nodes)/len(nodes):.0f}%")
 
-st.subheader("Interactive network topology")
+st.subheader("Network overview")
+st.caption("Use the outage selector to explore how failures affect the topology. Orange outlines mark graph weak points.")
 failed_names = st.multiselect("Simulate offline nodes", [n["name"] for n in nodes],
                               help="Offline nodes are greyed out and their links disappear from the active topology.")
 failed_ids = [n["node_id"] for n in nodes if n["name"] in failed_names]
@@ -140,6 +142,7 @@ st.caption("Synthetic coordinates and illustrative links; this is not a geograph
 st.caption("Grey nodes are offline in the selected scenario; only active links are drawn.")
 st.caption(f"Graph weak points: {weak['critical_node_count']} critical node(s), {weak['bridge_link_count']} bridge link(s). Orange highlights show graph vulnerabilities, not measured RF risk.")
 
+st.divider()
 st.subheader("Route explorer")
 names = {n["name"]: n["node_id"] for n in nodes}
 left, right = st.columns(2)
@@ -156,6 +159,7 @@ else:
     st.caption(f"{len(route)-1} simulated hop(s); routing is shortest-hop graph analysis, "
                "not a reproduction of Meshtastic firmware routing.")
 
+st.divider()
 st.subheader("Network resilience lab")
 st.caption("Remove virtual nodes to explore network fragmentation. This is graph analysis, not a real-world RF or packet-delivery prediction.")
 critical = critical_nodes(data)
@@ -175,6 +179,7 @@ if failure["groups"]:
 else:
     st.info("No nodes remain in this scenario.")
 
+st.divider()
 st.subheader("Network recovery planner")
 st.caption("Rank offline nodes by the increase in largest connected group if restored. Greedy graph planning, not a prediction of actual radio recovery.")
 if failed_ids:
@@ -194,6 +199,7 @@ if failed_ids:
 else:
     st.info("Select one or more offline nodes above to see recovery priorities.")
 
+st.divider()
 st.subheader("Simulation event timeline")
 st.caption("Deterministic, illustrative node outages and recoveries—not observed radio events.")
 steps = st.slider("Timeline steps", 5, 100, 25, 5)
@@ -210,6 +216,7 @@ st.download_button("Export simulated events CSV",
                    timeline_df.to_csv(index=False),
                    file_name="meshlab-simulation-events.csv", mime="text/csv")
 
+st.divider()
 st.subheader("Network reliability comparison")
 st.caption("Compare synthetic single-node failures and illustrative radio ranges; not measured reliability.")
 impact_df = pd.DataFrame(single_node_impact(data))
@@ -223,6 +230,7 @@ st.write("Illustrative range comparison (same node positions)")
 st.line_chart(comparison_df, x="range", y=["links", "connected_groups"], height=260)
 st.dataframe(comparison_df, hide_index=True, use_container_width=True)
 
+st.divider()
 st.subheader("Scenario planner")
 st.caption("Save simulation settings, reload them later, and compare two synthetic network configurations.")
 current_scenario = {"count": count, "seed": int(seed), "radius": float(radius)}
@@ -253,6 +261,7 @@ with st.expander("Compare two scenarios", expanded=False):
     if current_scenario["count"] != other_scenario["count"] or current_scenario["seed"] != other_scenario["seed"]:
         st.info("Node count or seed differs. Results compare different node layouts, not only radio range.")
 
+st.divider()
 st.subheader("Reproducible simulation report")
 st.caption("Download the simulation inputs, topology, connectivity summary, and node impact as JSON.")
 st.download_button("Download simulation report JSON",
