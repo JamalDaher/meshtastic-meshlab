@@ -30,6 +30,10 @@ In ideal RF connectivity mode, the Scenarios tab can download a versioned RF set
 
 See [v1.2 release notes and validation checklist](docs/RELEASE_NOTES_V1_2.md) before publishing the v1.2.0 release.
 
+## v1.3 geographic planning preview
+
+The Scenarios tab now includes a geographic planning section with editable node names and latitude/longitude, a node-position map, great-circle distances, ideal free-space RF link budgets, and CSV export. Coordinates are supplied manually; no device location is collected. The map shows points, **not** predicted coverage. Terrain, obstructions, fading and interference are not modeled. The existing synthetic topology remains unchanged.
+
 ## Features
 
 - Deterministic synthetic virtual nodes, adjustable radio range and seed
