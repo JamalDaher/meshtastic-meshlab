@@ -11,6 +11,7 @@ from meshlab.report import build_report, export_json
 from meshlab.scenarios import encode_scenario, decode_scenario, compare_scenarios
 from meshlab.weak_points import weak_points
 from meshlab.outage_overlay import outage_overlay
+from meshlab.recovery import recovery_options, recovery_sequence
 
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
@@ -168,6 +169,25 @@ if failure["groups"]:
         st.write(f"Group {i}: " + ", ".join(id_to_label[n] for n in group))
 else:
     st.info("No nodes remain in this scenario.")
+
+st.subheader("Network recovery planner")
+st.caption("Rank offline nodes by the increase in largest connected group if restored. Greedy graph planning, not a prediction of actual radio recovery.")
+if failed_ids:
+    recovery_rows = recovery_options(data, failed_ids)
+    if recovery_rows:
+        best = recovery_rows[0]
+        st.success(f"Restore {id_to_label[best['node_id']]} first: largest connected group gains {best['largest_group_gain']} node(s).")
+        st.dataframe(pd.DataFrame(recovery_rows).assign(
+            node=lambda df: df["node_id"].map(id_to_label)),
+            hide_index=True, use_container_width=True)
+        sequence_df = pd.DataFrame(recovery_sequence(data, failed_ids))
+        st.write("Suggested step-by-step recovery order")
+        st.dataframe(sequence_df.assign(node=sequence_df["node_id"].map(id_to_label)),
+                     hide_index=True, use_container_width=True)
+        st.download_button("Export recovery sequence CSV", sequence_df.to_csv(index=False),
+                           file_name="meshlab-recovery-sequence.csv", mime="text/csv")
+else:
+    st.info("Select one or more offline nodes above to see recovery priorities.")
 
 st.subheader("Simulation event timeline")
 st.caption("Deterministic, illustrative node outages and recoveries—not observed radio events.")
