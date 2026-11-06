@@ -4,6 +4,10 @@
 
 Simulation-first Meshtastic-style mesh network explorer built with Python and Streamlit. Independent community project, not affiliated with Meshtastic.
 
+## Workspace navigation
+
+The simulation dashboard groups tools into four tabs: **Network** (topology and routes), **Resilience** (outages and recovery), **Analysis** (timeline and reliability), and **Scenarios** (save, compare and export). Select a tab to focus on one task without scrolling through the entire dashboard.
+
 ## Features
 
 - Deterministic synthetic virtual nodes, adjustable radio range and seed
