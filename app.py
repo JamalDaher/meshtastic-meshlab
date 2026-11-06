@@ -155,9 +155,15 @@ with workspace_network:
         source_name = st.selectbox("Source node", list(names))
     with right:
         target_name = st.selectbox("Destination node", list(names), index=len(names)-1)
-    route = shortest_route(graph, names[source_name], names[target_name])
-    if route is None:
-        st.warning("No route exists between those nodes with the selected range.")
+    active_graph = graph.copy()
+    active_graph.remove_nodes_from(offline_ids)
+    source_id, target_id = names[source_name], names[target_name]
+    route = (shortest_route(active_graph, source_id, target_id)
+             if source_id in active_graph and target_id in active_graph else None)
+    if source_id in offline_ids or target_id in offline_ids:
+        st.warning("A selected endpoint is offline. Restore it to calculate a route.")
+    elif route is None:
+        st.warning("No active route exists between these nodes with the selected outages and range.")
     else:
         id_to_name = {v:k for k,v in names.items()}
         st.success(" → ".join(id_to_name[n] for n in route))
