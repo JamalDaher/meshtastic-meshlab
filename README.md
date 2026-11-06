@@ -24,6 +24,10 @@ Simulation settings can switch between the original distance threshold and an **
 
 In ideal free-space RF mode, the Network topology can color active links by estimated link margin: red (0–6 dB), amber (6–15 dB), and teal (15 dB and above). Hover to see the modeled margin. Links below receiver sensitivity are not drawn. These thresholds are illustrative, not calibrated reliability predictions. Disable margin coloring to show orange graph bridge links instead.
 
+## RF presets and reports
+
+In ideal RF connectivity mode, the Scenarios tab can download a versioned RF settings preset and a reproducible RF simulation report containing the selected radio profile, coordinate scale, computed network links, link margins and graph summary. Uploaded RF presets can be validated and inspected, but **do not automatically apply to controls** yet. Legacy distance-model presets and reports remain separate for backward compatibility.
+
 ## Features
 
 - Deterministic synthetic virtual nodes, adjustable radio range and seed
