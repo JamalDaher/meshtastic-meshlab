@@ -5,6 +5,7 @@ import streamlit as st
 from meshlab.simulator import simulate
 from meshlab.topology import build_graph, shortest_route, network_summary
 from meshlab.resilience import analyze_failure, critical_nodes
+from meshlab.timeline import generate_timeline
 
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
@@ -145,6 +146,22 @@ if failure["groups"]:
         st.write(f"Group {i}: " + ", ".join(id_to_label[n] for n in group))
 else:
     st.info("No nodes remain in this scenario.")
+
+st.subheader("Simulation event timeline")
+st.caption("Deterministic, illustrative node outages and recoveries—not observed radio events.")
+steps = st.slider("Timeline steps", 5, 100, 25, 5)
+timeline = generate_timeline(data, seed=int(seed), steps=steps)
+timeline_df = pd.DataFrame(timeline)
+t1, t2 = st.columns(2)
+with t1:
+    st.line_chart(timeline_df, x="step", y="active_nodes", height=240)
+with t2:
+    st.line_chart(timeline_df, x="step", y="connected_groups", height=240)
+st.dataframe(timeline_df.assign(node=timeline_df["node"].map(id_to_label)),
+             hide_index=True, use_container_width=True)
+st.download_button("Export simulated events CSV",
+                   timeline_df.to_csv(index=False),
+                   file_name="meshlab-simulation-events.csv", mime="text/csv")
 
 tab1, tab2 = st.tabs(["Nodes", "Links"])
 with tab1:
