@@ -19,6 +19,7 @@ from meshlab.rf_simulator import simulate_rf
 from meshlab.rf_coverage import margin_color, margin_category, coverage_summary
 from meshlab.rf_exports import encode_rf_scenario, decode_rf_scenario, build_rf_report
 from meshlab.geo import geographic_links, validate_nodes
+from meshlab.coverage import theoretical_radius_km, coverage_ring
 
 def apply_rf_preset(settings):
     """Button callback runs before widget construction on the next rerun."""
@@ -423,6 +424,22 @@ with workspace_scenarios:
         geo_links = geographic_links(geo_nodes, geo_profile)
         geo_by_name = {n["name"]: n for n in geo_nodes}
         geo_fig = go.Figure()
+        show_coverage = st.toggle("Show theoretical coverage rings", value=False, key="geo_show_coverage")
+        reserve_margin = st.slider("Coverage reserve margin (dB)", 0, 30, 10, 1, key="geo_reserve_margin",
+                                   disabled=not show_coverage)
+        if show_coverage:
+            radius_km = theoretical_radius_km(geo_profile, reserve_margin)
+            st.caption(f"Ideal free-space sensitivity radius: {radius_km:,.1f} km per node with {reserve_margin} dB reserve. This is not a reliable coverage forecast.")
+            if radius_km > 100:
+                st.warning("Radius exceeds 100 km. Rings are hidden at this scale to avoid misleading regional coverage displays.")
+            else:
+                for geo_node in geo_nodes:
+                    ring = coverage_ring(geo_node["lat"], geo_node["lon"], radius_km)
+                    geo_fig.add_trace(go.Scattermapbox(
+                        lat=[p[0] for p in ring], lon=[p[1] for p in ring],
+                        mode="lines", line=dict(width=1, color="#64748b"),
+                        hoverinfo="text", text=[f"{geo_node['name']}: ideal {radius_km:.1f} km radius"] * len(ring),
+                        showlegend=False))
         show_below = st.toggle("Show below-sensitivity links", value=False, key="geo_show_below")
         for geo_link in geo_links:
             if not geo_link["above_sensitivity"] and not show_below:
@@ -455,7 +472,7 @@ with workspace_scenarios:
         st.dataframe(pd.DataFrame(geo_links), hide_index=True, use_container_width=True)
         st.download_button("Export geographic links CSV", pd.DataFrame(geo_links).to_csv(index=False),
                            file_name="meshlab-geographic-links.csv", mime="text/csv")
-        st.caption("Lines represent ideal free-space link-budget estimates, not measured links or coverage. No terrain, obstruction, fading or interference is modeled.")
+        st.caption("Links and optional rings are ideal free-space estimates, not measured links or guaranteed coverage. Terrain, obstruction, fading and interference are not modeled.")
     except (ValueError, TypeError) as exc:
         st.warning(f"Geographic planner: {exc}")
 
