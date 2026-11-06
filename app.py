@@ -20,6 +20,7 @@ from meshlab.rf_coverage import margin_color, margin_category, coverage_summary
 from meshlab.rf_exports import encode_rf_scenario, decode_rf_scenario, build_rf_report
 from meshlab.geo import geographic_links, validate_nodes
 from meshlab.coverage import theoretical_radius_km, coverage_ring
+from meshlab.terrain import analyze_terrain_profile
 
 def apply_rf_preset(settings):
     """Button callback runs before widget construction on the next rerun."""
@@ -475,6 +476,30 @@ with workspace_scenarios:
         st.caption("Links and optional rings are ideal free-space estimates, not measured links or guaranteed coverage. Terrain, obstruction, fading and interference are not modeled.")
     except (ValueError, TypeError) as exc:
         st.warning(f"Geographic planner: {exc}")
+
+    with st.expander("Terrain line-of-sight profile · v1.3 preview"):
+        st.caption("Paste sampled ground elevations (distance_km,elevation_m). This does not download terrain data.")
+        profile_csv = st.text_area("Elevation samples (km, meters above sea level)",
+                                   value="0,100\\n0.5,100\\n1,100", key="terrain_samples")
+        tx_h = st.number_input("TX antenna height above ground (m)", 0.0, 1000.0, 5.0, key="terrain_tx_height")
+        rx_h = st.number_input("RX antenna height above ground (m)", 0.0, 1000.0, 5.0, key="terrain_rx_height")
+        try:
+            terrain_samples = []
+            for line in profile_csv.splitlines():
+                if line.strip():
+                    fields = line.split(",")
+                    if len(fields) != 2:
+                        raise ValueError("Each line must contain distance_km,elevation_m")
+                    terrain_samples.append((float(fields[0]), float(fields[1])))
+            terrain_result = analyze_terrain_profile(terrain_samples, tx_h, rx_h)
+            st.metric("Minimum interior terrain clearance", f"{terrain_result['minimum_interior_clearance_m']:.1f} m")
+            st.write("Geometric line of sight:", "Clear" if terrain_result["clear_line_of_sight"] else "Obstructed")
+            profile_df = pd.DataFrame(terrain_result["samples"])
+            st.line_chart(profile_df.set_index("distance_km")[["terrain_elevation_m", "sightline_elevation_m"]])
+            st.dataframe(profile_df, hide_index=True, use_container_width=True)
+            st.caption("Earth curvature uses an approximate 4/3 effective Earth radius. Clearance calculations include curvature, while the simple line chart does not plot the curvature bulge. Fresnel clearance and clutter are not modeled.")
+        except (ValueError, TypeError) as exc:
+            st.warning(f"Invalid terrain profile: {exc}")
 
     tab1, tab2 = st.tabs(["Nodes", "Links"])
     with tab1:
