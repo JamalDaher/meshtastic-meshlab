@@ -526,9 +526,10 @@ with workspace_scenarios:
             st.write("First Fresnel-zone clearance:",
                      "Clear at sampled points" if fresnel_result["fresnel_clear"] else "Insufficient at sampled points")
             profile_df = pd.DataFrame(fresnel_result["samples"])
-            st.line_chart(profile_df.set_index("distance_km")[["terrain_elevation_m", "sightline_elevation_m", "required_clearance_m"]])
+            st.line_chart(profile_df.set_index("distance_km")[["terrain_elevation_m", "sightline_elevation_m"]])
+            st.line_chart(profile_df.set_index("distance_km")[["clearance_m", "required_clearance_m"]])
             st.dataframe(profile_df, hide_index=True, use_container_width=True)
-            st.caption("Earth curvature uses an approximate 4/3 effective Earth radius. Clearance calculations include curvature, while the simple line chart does not plot the curvature bulge. Fresnel-zone clearance is estimated at supplied sample points only; the chart shows required clearance relative to the sightline, not an absolute elevation boundary. Clutter and diffraction are not modeled.")
+            st.caption("Earth curvature uses an approximate 4/3 effective Earth radius. Clearance calculations include curvature, while the simple line chart does not plot the curvature bulge. Fresnel-zone clearance is estimated at supplied sample points only; the second chart compares actual clearance against the required Fresnel clearance. Clutter and diffraction are not modeled.")
         except (ValueError, TypeError) as exc:
             st.warning(f"Invalid terrain profile: {exc}")
 
