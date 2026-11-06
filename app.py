@@ -500,12 +500,12 @@ with workspace_scenarios:
                     except (ValueError, OSError, TimeoutError) as exc:
                         st.error(f"Elevation lookup failed: {exc}")
         profile_csv = st.text_area("Elevation samples (km, meters above sea level)",
-                                   value="0,100\\n0.5,100\\n1,100", key="terrain_samples")
+                                   value="0,100\n0.5,100\n1,100", key="terrain_samples")
         tx_h = st.number_input("TX antenna height above ground (m)", 0.0, 1000.0, 5.0, key="terrain_tx_height")
         rx_h = st.number_input("RX antenna height above ground (m)", 0.0, 1000.0, 5.0, key="terrain_rx_height")
         try:
             terrain_samples = []
-            for line in profile_csv.splitlines():
+            for line in profile_csv.replace("\\n", "\n").splitlines():
                 if line.strip():
                     fields = line.split(",")
                     if len(fields) != 2:
