@@ -494,7 +494,7 @@ with workspace_scenarios:
                         path = sample_geographic_path(start_node["lat"], start_node["lon"],
                                                       end_node["lat"], end_node["lon"], terrain_points)
                         elevations = fetch_elevations(path)
-                        st.session_state["terrain_samples"] = "\\n".join(
+                        st.session_state["terrain_samples"] = "\n".join(
                             f"{distance:.6f},{height:.2f}" for distance, height in elevations)
                         st.success("Elevation samples loaded. Review the profile below.")
                     except (ValueError, OSError, TimeoutError) as exc:
