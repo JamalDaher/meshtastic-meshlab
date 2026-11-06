@@ -6,6 +6,7 @@ from meshlab.simulator import simulate
 from meshlab.topology import build_graph, shortest_route, network_summary
 from meshlab.resilience import analyze_failure, critical_nodes
 from meshlab.timeline import generate_timeline
+from meshlab.reliability import single_node_impact, range_comparison
 
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
@@ -162,6 +163,19 @@ st.dataframe(timeline_df.assign(node=timeline_df["node"].map(id_to_label)),
 st.download_button("Export simulated events CSV",
                    timeline_df.to_csv(index=False),
                    file_name="meshlab-simulation-events.csv", mime="text/csv")
+
+st.subheader("Network reliability comparison")
+st.caption("Compare synthetic single-node failures and illustrative radio ranges; not measured reliability.")
+impact_df = pd.DataFrame(single_node_impact(data))
+st.write("Single-node outage sensitivity")
+st.dataframe(impact_df, hide_index=True, use_container_width=True)
+st.download_button("Export node impact CSV", impact_df.to_csv(index=False),
+                   file_name="meshlab-node-impact.csv", mime="text/csv")
+range_values = sorted(set([max(0.5, round(radius * factor, 2)) for factor in (0.5, 0.75, 1, 1.25, 1.5)]))
+comparison_df = pd.DataFrame(range_comparison(count, int(seed), range_values))
+st.write("Illustrative range comparison (same node positions)")
+st.line_chart(comparison_df, x="range", y=["links", "connected_groups"], height=260)
+st.dataframe(comparison_df, hide_index=True, use_container_width=True)
 
 tab1, tab2 = st.tabs(["Nodes", "Links"])
 with tab1:
