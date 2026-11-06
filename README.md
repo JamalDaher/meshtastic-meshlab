@@ -34,6 +34,10 @@ See [v1.2 release notes and validation checklist](docs/RELEASE_NOTES_V1_2.md) be
 
 The Scenarios tab now includes a geographic planning section with editable node names and latitude/longitude, a node-position map, great-circle distances, ideal free-space RF link budgets, and CSV export. Coordinates are supplied manually; no device location is collected. The interactive map shows node positions, margin-colored estimated links, and optional ideal free-space coverage rings with an adjustable reserve margin. Rings over 100 km are suppressed to avoid misleading regional displays. These are **not** terrain-aware or guaranteed coverage predictions. Terrain, obstructions, fading and interference are not modeled. The existing synthetic topology remains unchanged.
 
+## Terrain line-of-sight preview (v1.3)
+
+A manual elevation-profile tool in Scenarios accepts ordered distance/elevation samples, antenna heights and reports geometric terrain clearance with an approximate effective Earth-radius correction. **It does not fetch elevation data**, incorporate Fresnel-zone clearance, or account for vegetation/buildings. Results are only as reliable as the supplied samples.
+
 ## Features
 
 - Deterministic synthetic virtual nodes, adjustable radio range and seed
