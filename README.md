@@ -6,7 +6,7 @@ Simulation-first Meshtastic-style mesh network explorer built with Python and St
 
 ## Workspace navigation
 
-The simulation dashboard groups tools into four tabs: **Network** (topology and routes), **Resilience** (outages and recovery), **Analysis** (timeline and reliability), and **Scenarios** (save, compare and export). Select a tab to focus on one task without scrolling through the entire dashboard.
+The simulation dashboard groups tools into five tabs: **Network** (topology and routes), **Resilience** (outages and recovery), **Analysis** (timeline and reliability), **Scenarios** (save, compare and export), and **Geographic** (maps, RF links, terrain and Fresnel analysis). Select a tab to focus on one task without scrolling through the entire dashboard.
 
 ## v1.1 release
 
@@ -32,11 +32,11 @@ See [v1.2 release notes and validation checklist](docs/RELEASE_NOTES_V1_2.md) be
 
 ## v1.3 geographic planning preview
 
-The Scenarios tab now includes a geographic planning section with editable node names and latitude/longitude, a node-position map, great-circle distances, ideal free-space RF link budgets, and CSV export. Coordinates are supplied manually; no device location is collected. The interactive map shows node positions, margin-colored estimated links, and optional user-defined planning radius rings (0.5–100 km), alongside the separately displayed ideal free-space sensitivity radius and adjustable reserve margin. These are **not** terrain-aware or guaranteed coverage predictions. Terrain, obstructions, fading and interference are not modeled. The existing synthetic topology remains unchanged.
+The dedicated Geographic tab includes a geographic planning section with editable node names and latitude/longitude, a node-position map, great-circle distances, ideal free-space RF link budgets, and CSV export. Coordinates are supplied manually; no device location is collected. The interactive map shows node positions, margin-colored estimated links, and optional user-defined planning radius rings (0.5–100 km), alongside the separately displayed ideal free-space sensitivity radius and adjustable reserve margin. These are **not** terrain-aware or guaranteed coverage predictions. Terrain, obstructions, fading and interference are not modeled. The existing synthetic topology remains unchanged.
 
 ## Terrain line-of-sight preview (v1.3)
 
-A manual elevation-profile tool in Scenarios accepts ordered distance/elevation samples, antenna heights and reports geometric terrain clearance with an approximate effective Earth-radius correction. It can optionally fetch elevation samples from the public Open-Meteo elevation API when the user explicitly clicks Fetch; selected geographic coordinates are sent to that service, account for vegetation/buildings. The panel also estimates first Fresnel-zone clearance at sampled points with adjustable frequency and required clearance percentage; this is not a diffraction or propagation model. Results are only as reliable as the supplied samples.
+A manual elevation-profile tool in Geographic accepts ordered distance/elevation samples, antenna heights and reports geometric terrain clearance with an approximate effective Earth-radius correction. It can optionally fetch elevation samples from the public Open-Meteo elevation API when the user explicitly clicks Fetch; selected geographic coordinates are sent to that service, account for vegetation/buildings. The panel also estimates first Fresnel-zone clearance at sampled points with adjustable frequency and required clearance percentage; this is not a diffraction or propagation model. Results are only as reliable as the supplied samples.
 
 ## Features
 
