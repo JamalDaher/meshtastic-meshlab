@@ -9,6 +9,7 @@ from meshlab.timeline import generate_timeline
 from meshlab.reliability import single_node_impact, range_comparison
 from meshlab.report import build_report, export_json
 from meshlab.scenarios import encode_scenario, decode_scenario, compare_scenarios
+from meshlab.weak_points import weak_points
 
 st.set_page_config(page_title="MeshLab", page_icon="📡", layout="wide")
 st.title("📡 MeshLab")
@@ -93,19 +94,26 @@ d.metric("Average battery", f"{sum(n['battery'] for n in nodes)/len(nodes):.0f}%
 st.subheader("Interactive network topology")
 node_by_id = {n["node_id"]: n for n in nodes}
 fig = go.Figure()
+weak = weak_points(data)
+highlight_weak = st.toggle("Highlight critical nodes and bridge links", value=True)
+bridge_links = set(weak["bridge_links"]) if highlight_weak else set()
+critical_ids = set(weak["critical_nodes"]) if highlight_weak else set()
 for link in links:
     src, dst = node_by_id[link["source"]], node_by_id[link["target"]]
+    is_bridge = tuple(sorted((link["source"], link["target"]))) in bridge_links
     fig.add_trace(go.Scatter(
         x=[src["x"], dst["x"]], y=[src["y"], dst["y"]],
-        mode="lines", line=dict(width=1.8, color="#4f8fa5"),
+        mode="lines", line=dict(width=3.5 if is_bridge else 1.8,
+                                color="#ff9f43" if is_bridge else "#4f8fa5"),
         hoverinfo="skip", showlegend=False))
 fig.add_trace(go.Scatter(
     x=[n["x"] for n in nodes], y=[n["y"] for n in nodes],
     mode="markers+text", text=[n["name"] for n in nodes],
     textposition="top center", customdata=[[n["node_id"], n["battery"]] for n in nodes],
-    marker=dict(size=16, color=[n["battery"] for n in nodes],
+    marker=dict(size=[23 if n["node_id"] in critical_ids else 16 for n in nodes], color=[n["battery"] for n in nodes],
                 colorscale="Viridis", showscale=True, colorbar=dict(title="Battery %"),
-                line=dict(width=1, color="#d8e5ef")),
+                line=dict(width=[3 if n["node_id"] in critical_ids else 1 for n in nodes],
+                          color=["#ff9f43" if n["node_id"] in critical_ids else "#d8e5ef" for n in nodes])),
     hovertemplate="%{text}<br>ID: %{customdata[0]}<br>Battery: %{customdata[1]}%<extra></extra>",
     showlegend=False))
 fig.update_layout(template="plotly_dark", height=530, margin=dict(l=15,r=15,t=15,b=15),
@@ -114,6 +122,7 @@ fig.update_layout(template="plotly_dark", height=530, margin=dict(l=15,r=15,t=15
                              scaleanchor="x", scaleratio=1))
 st.plotly_chart(fig, use_container_width=True)
 st.caption("Synthetic coordinates and illustrative links; this is not a geographic map or validated RF model.")
+st.caption(f"Graph weak points: {weak['critical_node_count']} critical node(s), {weak['bridge_link_count']} bridge link(s). Orange highlights show graph vulnerabilities, not measured RF risk.")
 
 st.subheader("Route explorer")
 names = {n["name"]: n["node_id"] for n in nodes}
