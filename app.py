@@ -103,12 +103,14 @@ if mode != "Simulation":
                "No message text, payload or position is retained.")
     st.stop()
 
+radius = 5.0  # Legacy distance-model scenario and report tools retain their own range.
 if connectivity_mode == "Ideal free-space RF":
     profile = RadioProfile(frequency_mhz=rf_frequency, tx_power_dbm=rf_tx_power,
                            tx_gain_dbi=rf_tx_gain, rx_gain_dbi=rf_rx_gain,
                            cable_loss_db=rf_cable_loss, receiver_sensitivity_dbm=rf_sensitivity)
     data = simulate_rf(count, int(seed), km_per_unit, profile)
     st.caption("Connectivity: ideal free-space RF threshold. Synthetic coordinate spacing is scaled to km; no terrain, fading, or LoRa packet modeling.")
+    st.info("Timeline, range comparisons, saved scenarios and JSON report still use the legacy distance model. RF settings are not included in those exports yet.")
 else:
     data = simulate(count, int(seed), radius)
 nodes, links = data["nodes"], data["links"]
