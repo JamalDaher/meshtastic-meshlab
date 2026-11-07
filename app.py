@@ -157,8 +157,8 @@ with st.expander("Connectivity and vulnerability details"):
     st.write(f"Offline nodes: {dashboard['offline_nodes']} · Critical nodes: {dashboard['critical_nodes']} · Bridge links: {dashboard['bridge_links']}")
     st.caption("Graph metrics are synthetic and do not predict actual RF performance.")
 
-workspace_network, workspace_resilience, workspace_analysis, workspace_scenarios = st.tabs(
-    ["🕸️ Network", "🛡️ Resilience", "📈 Analysis", "💾 Scenarios"]
+workspace_network, workspace_resilience, workspace_analysis, workspace_scenarios, workspace_geographic = st.tabs(
+    ["🕸️ Network", "🛡️ Resilience", "📈 Analysis", "💾 Scenarios", "🗺️ Geographic"]
 )
 
 with workspace_network:
@@ -403,7 +403,13 @@ with workspace_scenarios:
                        export_json(build_report(count, int(seed), radius)),
                        file_name="meshlab-simulation-report.json", mime="application/json")
 
-    st.divider()
+    tab1, tab2 = st.tabs(["Nodes", "Links"])
+    with tab1:
+        st.dataframe(pd.DataFrame(nodes), hide_index=True, use_container_width=True)
+    with tab2:
+        st.dataframe(pd.DataFrame(links), hide_index=True, use_container_width=True)
+
+with workspace_geographic:
     st.subheader("Geographic RF planner · v1.3 preview")
     st.caption("Enter real latitude/longitude for proposed nodes. This is a separate planning tool, not a replacement for the synthetic topology.")
     if "geo_nodes" not in st.session_state:
@@ -533,8 +539,3 @@ with workspace_scenarios:
         except (ValueError, TypeError) as exc:
             st.warning(f"Invalid terrain profile: {exc}")
 
-    tab1, tab2 = st.tabs(["Nodes", "Links"])
-    with tab1:
-        st.dataframe(pd.DataFrame(nodes), hide_index=True, use_container_width=True)
-    with tab2:
-        st.dataframe(pd.DataFrame(links), hide_index=True, use_container_width=True)
