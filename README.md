@@ -114,3 +114,5 @@ The local live-radio panel distinguishes **Disconnected**, **Connected · awaiti
 Live mode now summarizes per-node observed RSSI and SNR (sample counts, mean, minimum and maximum) from recent received packet metadata. These are descriptive statistics, not packet-delivery estimates or validated link-quality scores.
 
 The local live-radio dashboard also provides an optional multi-node signal-history comparison with separate RSSI and SNR plots, using only received packet metadata retained in memory.
+
+Live network diagnostics flag nodes with stale packet activity, fewer than three observed packets, or missing RSSI/SNR readings. Flags describe gaps in the current bounded receive history, not hardware faults or packet-delivery failures.
