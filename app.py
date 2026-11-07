@@ -26,6 +26,7 @@ from meshlab.site_comparison import rank_sites
 from meshlab.site_terrain import link_key, summarize_saved_links
 from meshlab.terrain_ranking import rank_terrain_sites
 from meshlab.height_planner import sweep_antenna_heights, optimize_independent_heights
+from meshlab.geographic_report import build_geographic_report, report_json
 from meshlab.elevation import sample_geographic_path, fetch_elevations
 
 def apply_rf_preset(settings):
@@ -483,6 +484,23 @@ with workspace_geographic:
             margin=dict(l=0, r=0, t=0, b=0), height=470)
         st.plotly_chart(geo_fig, use_container_width=True)
         st.caption("Link colors: teal ≥15 dB, amber 6–15 dB, red 0–6 dB, gray below sensitivity. Zoom and pan the map to inspect nodes.")
+        with st.expander("Download geographic planning report", expanded=False):
+            st.caption("Versioned JSON combines current RF estimates, site rankings, sampled terrain assessments, and assumptions. No raw elevation samples are exported.")
+            report_tx_height = st.number_input("Report TX antenna height (m)", min_value=0.0,
+                                               max_value=1000.0, value=5.0, key="geo_report_tx_height")
+            report_rx_height = st.number_input("Report RX antenna height (m)", min_value=0.0,
+                                               max_value=1000.0, value=5.0, key="geo_report_rx_height")
+            report_fresnel_fraction = st.slider("Report Fresnel clearance target (%)",
+                                                0, 100, 60, 5, key="geo_report_fresnel")
+            report = build_geographic_report(
+                geo_nodes, geo_links, st.session_state.get("saved_link_terrain", {}),
+                report_tx_height, report_rx_height, geo_frequency,
+                report_fresnel_fraction / 100,
+                {"frequency_mhz": geo_frequency, "tx_power_dbm": geo_tx_power,
+                 "receiver_sensitivity_dbm": geo_sensitivity, "tx_gain_dbi": geo_tx_gain,
+                 "rx_gain_dbi": geo_rx_gain, "cable_loss_db": geo_loss})
+            st.download_button("Download geographic RF report JSON", report_json(report),
+                               file_name="meshlab-geographic-report.json", mime="application/json")
         with st.expander("Compare proposed sites · modeled connectivity", expanded=True):
             site_rankings = rank_sites(geo_nodes, geo_links)
             st.caption("Ranked by number of above-sensitivity peer links, then weakest active link margin. These ideal free-space estimates do not include terrain or real-world reliability.")
