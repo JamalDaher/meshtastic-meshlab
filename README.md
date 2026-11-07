@@ -90,3 +90,5 @@ Simulation node positions are synthetic. RSSI, SNR and distance are illustrative
 4. Expand event analysis and scenario comparisons
 
 See [v1.0 release notes](docs/RELEASE_NOTES_V1.md).
+
+For multi-link planning, explicitly fetch and save each link's elevation profile, then open **Compare saved link terrain profiles** to review sampled geometric and Fresnel status or export CSV. Saved profiles are session-only, bound to exact site coordinates, and unassessed links remain marked **Not evaluated**. This does not automatically fetch terrain for every link or validate real RF reliability.
