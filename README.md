@@ -12,6 +12,10 @@ The simulation dashboard groups tools into five tabs: **Network** (topology and 
 
 The v1.1 network-planning milestone adds a compact, outage-aware simulation summary, shared offline-node controls across tabs, optional node labels, and route highlighting. See [v1.1 release notes and validation checklist](docs/RELEASE_NOTES_V1_1.md). The simulation is illustrative rather than an RF prediction.
 
+## v1.4 preview — Local live-node monitoring
+
+The existing **Live radio (local only)** mode supports read-only USB serial and private-LAN TCP connections when optional Meshtastic dependencies are installed. The new node status dashboard summarizes packet counts, last-seen time, active/stale status, and latest received RSSI/SNR without retaining messages, payloads or positions. It does **not** collect battery or GPS readings and cannot prove radio reachability. The hosted Streamlit demo remains simulation-only when configured with `MESHLAB_SIMULATION_ONLY=1`.
+
 ## v1.3 Geographic RF Planning
 
 The **Geographic** tab supports map-based node placement, ideal RF links and coverage rings, optional sampled terrain and Fresnel clearance analysis, session-only multi-link comparisons, terrain-aware site rankings, antenna-height planning, and downloadable planning reports. This is a model-based planning aid, not verified radio coverage. See [v1.3 release notes and validation checklist](docs/RELEASE_NOTES_V1_3.md).
