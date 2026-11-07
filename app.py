@@ -30,6 +30,7 @@ from meshlab.geographic_report import build_geographic_report, report_json
 from meshlab.elevation import sample_geographic_path, fetch_elevations
 from meshlab.live_dashboard import live_node_summary
 from meshlab.connection_diagnostics import connection_diagnostics
+from meshlab.signal_quality import signal_quality_summary
 
 def apply_rf_preset(settings):
     """Button callback runs before widget construction on the next rerun."""
@@ -132,6 +133,13 @@ if mode != "Simulation":
         st.caption("SNR is in dB; RSSI is in dBm. Their scales differ.")
     else:
         st.info("No received signal readings yet.")
+    st.subheader("Observed signal quality")
+    st.caption("Per-node descriptive RSSI (dBm) and SNR (dB) statistics from received packet metadata only. No packet-delivery rate, link reliability, or quality grade is inferred.")
+    quality_rows = signal_quality_summary(events)
+    if quality_rows:
+        st.dataframe(pd.DataFrame(quality_rows), hide_index=True, use_container_width=True)
+    else:
+        st.info("Signal summaries appear after packet metadata is received.")
     st.subheader("Live node status")
     st.caption("Read-only, received-packet metadata. Active means heard within five minutes; it does not prove the radio is currently reachable. No battery or GPS data is collected.")
     live_rows = live_node_summary(events)
