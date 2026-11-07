@@ -23,6 +23,7 @@ from meshlab.coverage import theoretical_radius_km, coverage_ring
 from meshlab.terrain import analyze_terrain_profile
 from meshlab.fresnel import analyze_fresnel_clearance
 from meshlab.site_comparison import rank_sites
+from meshlab.site_terrain import link_key, summarize_saved_links
 from meshlab.elevation import sample_geographic_path, fetch_elevations
 
 def apply_rf_preset(settings):
@@ -560,6 +561,15 @@ with workspace_geographic:
                 st.caption("Status applies only to this selected link and the currently displayed samples. Editing samples changes the result; no other links or site rankings are terrain-validated.")
             st.write("First Fresnel-zone clearance:",
                      "Clear at sampled points" if fresnel_result["fresnel_clear"] else "Insufficient at sampled points")
+            if ("path_identity" in locals()
+                    and st.session_state.get("terrain_profile_identity") == path_identity
+                    and st.session_state.get("terrain_profile_source") == "fetched"):
+                if st.button("Save fetched profile for link comparison", key="terrain_save_link"):
+                    saved = st.session_state.setdefault("saved_link_terrain", {})
+                    saved[link_key(start_node, end_node)] = [
+                        (float(distance), float(elevation)) for distance, elevation in terrain_samples
+                    ]
+                    st.success("Saved this sampled terrain profile in the current session.")
             profile_df = pd.DataFrame(fresnel_result["samples"])
             st.line_chart(profile_df.set_index("distance_km")[["terrain_elevation_m", "sightline_elevation_m"]])
             st.line_chart(profile_df.set_index("distance_km")[["clearance_m", "required_clearance_m"]])
@@ -567,4 +577,15 @@ with workspace_geographic:
             st.caption("Earth curvature uses an approximate 4/3 effective Earth radius. Clearance calculations include curvature, while the simple line chart does not plot the curvature bulge. Fresnel-zone clearance is estimated at supplied sample points only; the second chart compares actual clearance against the required Fresnel clearance. Clutter and diffraction are not modeled.")
         except (ValueError, TypeError) as exc:
             st.warning(f"Invalid terrain profile: {exc}")
+        if "geo_nodes" in locals() and "geo_links" in locals():
+            with st.expander("Compare saved link terrain profiles", expanded=False):
+                st.caption("Profiles are saved only for this browser session. Unchecked links remain Not evaluated; this is not an automatic terrain survey.")
+                comparison_rows = summarize_saved_links(
+                    geo_nodes, geo_links, st.session_state.get("saved_link_terrain", {}),
+                    tx_h, rx_h, fresnel_frequency, fresnel_fraction / 100)
+                st.dataframe(pd.DataFrame(comparison_rows), hide_index=True, use_container_width=True)
+                st.download_button("Export terrain comparison CSV",
+                                   pd.DataFrame(comparison_rows).to_csv(index=False),
+                                   file_name="meshlab-terrain-comparison.csv", mime="text/csv")
+
 
