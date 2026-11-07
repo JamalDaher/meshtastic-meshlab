@@ -25,6 +25,7 @@ from meshlab.fresnel import analyze_fresnel_clearance
 from meshlab.site_comparison import rank_sites
 from meshlab.site_terrain import link_key, summarize_saved_links
 from meshlab.terrain_ranking import rank_terrain_sites
+from meshlab.height_planner import sweep_antenna_heights
 from meshlab.elevation import sample_geographic_path, fetch_elevations
 
 def apply_rf_preset(settings):
@@ -570,6 +571,25 @@ with workspace_geographic:
                     saved = st.session_state.setdefault("saved_link_terrain", {})
                     saved[link_key(start_node, end_node)] = list(st.session_state["terrain_fetched_samples"])
                     st.success("Saved this sampled terrain profile in the current session.")
+            with st.expander("Antenna-height planner", expanded=False):
+                st.caption("Raises both antennas by the same increment and checks sampled Fresnel clearance. This is a discrete planning estimate, not a minimum-cost tower design.")
+                max_height = st.number_input("Maximum antenna height above ground (m)",
+                                             min_value=max(float(tx_h), float(rx_h)),
+                                             max_value=1000.0,
+                                             value=max(30.0, float(tx_h), float(rx_h)),
+                                             key="terrain_height_max")
+                height_step = st.select_slider("Height increment (m)",
+                                               options=[0.5, 1.0, 2.0, 5.0],
+                                               value=1.0, key="terrain_height_step")
+                height_rows = sweep_antenna_heights(
+                    terrain_samples, tx_h, rx_h, fresnel_frequency,
+                    fresnel_fraction / 100, max_height, height_step)
+                first_clear = next((row for row in height_rows if row["fresnel_clear"]), None)
+                if first_clear:
+                    st.success(f'First passing sampled configuration: TX {first_clear["tx_height_m"]:.1f} m, RX {first_clear["rx_height_m"]:.1f} m (+{first_clear["raise_both_by_m"]:.1f} m each).')
+                else:
+                    st.info("No passing sampled configuration within the selected height limit.")
+                st.dataframe(pd.DataFrame(height_rows), hide_index=True, use_container_width=True)
             profile_df = pd.DataFrame(fresnel_result["samples"])
             st.line_chart(profile_df.set_index("distance_km")[["terrain_elevation_m", "sightline_elevation_m"]])
             st.line_chart(profile_df.set_index("distance_km")[["clearance_m", "required_clearance_m"]])
