@@ -25,7 +25,7 @@ from meshlab.fresnel import analyze_fresnel_clearance
 from meshlab.site_comparison import rank_sites
 from meshlab.site_terrain import link_key, summarize_saved_links
 from meshlab.terrain_ranking import rank_terrain_sites
-from meshlab.height_planner import sweep_antenna_heights
+from meshlab.height_planner import sweep_antenna_heights, optimize_independent_heights
 from meshlab.elevation import sample_geographic_path, fetch_elevations
 
 def apply_rf_preset(settings):
@@ -590,6 +590,22 @@ with workspace_geographic:
                 else:
                     st.info("No passing sampled configuration within the selected height limit.")
                 st.dataframe(pd.DataFrame(height_rows), hide_index=True, use_container_width=True)
+                st.divider()
+                st.write("Independent TX/RX height combinations")
+                if st.button("Find independent antenna heights", key="terrain_optimize_heights"):
+                    try:
+                        optimal_rows = optimize_independent_heights(
+                            terrain_samples, tx_h, rx_h, fresnel_frequency,
+                            fresnel_fraction / 100, max_height, height_step)
+                        if optimal_rows:
+                            best = optimal_rows[0]
+                            st.success(f'Lowest combined added height on this grid: TX +{best["tx_added_m"]:.1f} m, RX +{best["rx_added_m"]:.1f} m (total +{best["total_added_m"]:.1f} m).')
+                            st.dataframe(pd.DataFrame(optimal_rows), hide_index=True, use_container_width=True)
+                        else:
+                            st.info("No passing TX/RX combination within the selected limits.")
+                    except ValueError as exc:
+                        st.warning(f"Height optimization: {exc}")
+
             profile_df = pd.DataFrame(fresnel_result["samples"])
             st.line_chart(profile_df.set_index("distance_km")[["terrain_elevation_m", "sightline_elevation_m"]])
             st.line_chart(profile_df.set_index("distance_km")[["clearance_m", "required_clearance_m"]])
