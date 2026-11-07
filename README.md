@@ -12,6 +12,10 @@ The simulation dashboard groups tools into five tabs: **Network** (topology and 
 
 The v1.1 network-planning milestone adds a compact, outage-aware simulation summary, shared offline-node controls across tabs, optional node labels, and route highlighting. See [v1.1 release notes and validation checklist](docs/RELEASE_NOTES_V1_1.md). The simulation is illustrative rather than an RF prediction.
 
+## v1.3 Geographic RF Planning
+
+The **Geographic** tab supports map-based node placement, ideal RF links and coverage rings, optional sampled terrain and Fresnel clearance analysis, session-only multi-link comparisons, terrain-aware site rankings, antenna-height planning, and downloadable planning reports. This is a model-based planning aid, not verified radio coverage. See [v1.3 release notes and validation checklist](docs/RELEASE_NOTES_V1_3.md).
+
 ## v1.2 Advanced RF Planning
 
 The Network tab includes an independent **ideal free-space RF link budget explorer** with configurable frequency, transmit power, antenna gains, cable losses, receiver sensitivity and link distance. It reports free-space path loss, estimated received power and margin. The independent explorer does not change topology; the separate selectable RF connectivity mode does. Neither is terrain-aware or a validated LoRa coverage prediction.
