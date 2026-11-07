@@ -110,3 +110,5 @@ The antenna-height planner also offers on-demand independent TX/RX height combin
 Use **Download geographic planning report** in the Geographic workspace to export versioned JSON with site coordinates, modeled RF links, site rankings, saved-profile terrain assessments, radio/antenna assumptions and explicit model limitations. Raw elevation samples are not included. The report does not imply that unassessed links are clear.
 
 The local live-radio panel distinguishes **Disconnected**, **Connected · awaiting packets**, **Receiving recently**, and **Connected · no recent packets**. These statuses reflect transport state and observed packet metadata, not confirmed two-way radio connectivity.
+
+Live mode now summarizes per-node observed RSSI and SNR (sample counts, mean, minimum and maximum) from recent received packet metadata. These are descriptive statistics, not packet-delivery estimates or validated link-quality scores.
