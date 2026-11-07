@@ -29,6 +29,7 @@ from meshlab.height_planner import sweep_antenna_heights, optimize_independent_h
 from meshlab.geographic_report import build_geographic_report, report_json
 from meshlab.elevation import sample_geographic_path, fetch_elevations
 from meshlab.live_dashboard import live_node_summary
+from meshlab.connection_diagnostics import connection_diagnostics
 
 def apply_rf_preset(settings):
     """Button callback runs before widget construction on the next rerun."""
@@ -99,10 +100,21 @@ if mode != "Simulation":
                 st.success("Disconnected")
             except Exception as exc:
                 st.error(f"Disconnect failed: {type(exc).__name__}: {exc}")
-    st.write("Status:", "Connected" if gateway.connected else "Disconnected")
     if st.button("Refresh received telemetry"):
         st.rerun()
     snapshot = gateway.monitor.snapshot()
+    diagnostic = connection_diagnostics(gateway.connected, snapshot["events"])
+    st.write("Receive status:", diagnostic["state"])
+    st.caption(diagnostic["message"])
+    if diagnostic["last_packet_utc"] is not None:
+        st.caption(f'Last observed packet: {diagnostic["last_packet_utc"]} · {diagnostic["seconds_since_packet"]} seconds ago')
+    with st.expander("Local connection troubleshooting"):
+        st.markdown(
+            "- **Disconnected:** Check the USB cable/serial port or private-LAN IP, then connect.\\n"
+            "- **Connected · awaiting packets:** The transport opened, but no packets have been observed. Check radio power, channel settings and nearby traffic.\\n"
+            "- **Connected · no recent packets:** No metadata has arrived recently; refresh and verify the radio is receiving.\\n"
+            "- **Receiving recently:** Packet metadata was observed in the last five minutes; this does not guarantee two-way reachability."
+        )
     from meshlab.analytics import node_activity, signal_series, export_csv
     events = snapshot["events"]
     stats = node_activity(events)
