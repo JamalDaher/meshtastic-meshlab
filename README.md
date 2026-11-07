@@ -92,3 +92,5 @@ Simulation node positions are synthetic. RSSI, SNR and distance are illustrative
 See [v1.0 release notes](docs/RELEASE_NOTES_V1.md).
 
 For multi-link planning, explicitly fetch and save each link's elevation profile, then open **Compare saved link terrain profiles** to review sampled geometric and Fresnel status or export CSV. Saved profiles are session-only, bound to exact site coordinates, and unassessed links remain marked **Not evaluated**. This does not automatically fetch terrain for every link or validate real RF reliability.
+
+The Geographic workspace also ranks sites by **evaluated** RF-above-sensitivity links with sampled terrain and Fresnel clearance. It shows how many links are unevaluated and never treats missing terrain as clear. The ranking is limited to sampled elevations, assumes shared antenna heights and does not model vegetation, diffraction, or measured packet reliability.

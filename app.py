@@ -24,6 +24,7 @@ from meshlab.terrain import analyze_terrain_profile
 from meshlab.fresnel import analyze_fresnel_clearance
 from meshlab.site_comparison import rank_sites
 from meshlab.site_terrain import link_key, summarize_saved_links
+from meshlab.terrain_ranking import rank_terrain_sites
 from meshlab.elevation import sample_geographic_path, fetch_elevations
 
 def apply_rf_preset(settings):
@@ -584,6 +585,16 @@ with workspace_geographic:
                     geo_nodes, geo_links, st.session_state.get("saved_link_terrain", {}),
                     tx_h, rx_h, fresnel_frequency, fresnel_fraction / 100)
                 st.dataframe(pd.DataFrame(comparison_rows), hide_index=True, use_container_width=True)
+                terrain_rankings = rank_terrain_sites(geo_nodes, geo_links, comparison_rows)
+                st.write("Site ranking · assessed terrain links only")
+                st.caption("Ranks by RF-above-sensitivity links with sampled terrain and Fresnel clearance, then by evaluated link count. Unevaluated links are never counted as clear; ties are not evidence of equal field performance.")
+                st.dataframe(pd.DataFrame(terrain_rankings)[[
+                    "rank", "name", "rf_and_terrain_clear", "evaluated_links",
+                    "terrain_and_fresnel_clear", "terrain_blocked_or_fresnel_insufficient",
+                    "not_evaluated_links"]], hide_index=True, use_container_width=True)
+                st.download_button("Export terrain-aware site ranking CSV",
+                                   pd.DataFrame(terrain_rankings).to_csv(index=False),
+                                   file_name="meshlab-terrain-site-ranking.csv", mime="text/csv")
                 st.download_button("Export terrain comparison CSV",
                                    pd.DataFrame(comparison_rows).to_csv(index=False),
                                    file_name="meshlab-terrain-comparison.csv", mime="text/csv")
