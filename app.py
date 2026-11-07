@@ -501,24 +501,35 @@ with workspace_geographic:
     with st.expander("Terrain line-of-sight profile · v1.3 preview"):
         st.caption("Paste sampled ground elevations (distance_km,elevation_m). This does not download terrain data.")
         st.caption("Optional: select two geographic nodes and request elevations from Open-Meteo. Node coordinates will be sent to that service.")
-        if "geo_nodes" in st.session_state:
-            node_names = [n["name"] for n in geo_nodes] if "geo_nodes" in locals() else []
-            if len(node_names) >= 2:
-                terrain_start = st.selectbox("Elevation path start", node_names, index=0, key="terrain_start")
-                terrain_end = st.selectbox("Elevation path end", node_names, index=1, key="terrain_end")
-                terrain_points = st.slider("Elevation sample points", 2, 100, 21, key="terrain_points")
-                if st.button("Fetch elevation profile", key="terrain_fetch"):
-                    try:
-                        start_node = next(n for n in geo_nodes if n["name"] == terrain_start)
-                        end_node = next(n for n in geo_nodes if n["name"] == terrain_end)
-                        path = sample_geographic_path(start_node["lat"], start_node["lon"],
-                                                      end_node["lat"], end_node["lon"], terrain_points)
-                        elevations = fetch_elevations(path)
-                        st.session_state["terrain_samples"] = "\n".join(
-                            f"{distance:.6f},{height:.2f}" for distance, height in elevations)
-                        st.success("Elevation samples loaded. Review the profile below.")
-                    except (ValueError, OSError, TimeoutError) as exc:
-                        st.error(f"Elevation lookup failed: {exc}")
+        node_names = [n["name"] for n in geo_nodes] if "geo_nodes" in locals() else []
+        if len(node_names) >= 2:
+            terrain_start = st.selectbox("Elevation path start", node_names, index=0, key="terrain_start")
+            terrain_end = st.selectbox("Elevation path end", node_names, index=1, key="terrain_end")
+            terrain_points = st.slider("Elevation sample points", 2, 100, 21, key="terrain_points")
+            start_node = next(n for n in geo_nodes if n["name"] == terrain_start)
+            end_node = next(n for n in geo_nodes if n["name"] == terrain_end)
+            path_identity = (terrain_start, start_node["lat"], start_node["lon"],
+                             terrain_end, end_node["lat"], end_node["lon"], terrain_points)
+            selected_link = next((link for link in geo_links
+                                  if {link["source"], link["target"]} == {terrain_start, terrain_end}), None)
+            if selected_link:
+                st.write("Selected link — ideal free-space estimate:",
+                         f'{selected_link["distance_km"]:.2f} km, '
+                         f'{selected_link["link_margin_db"]:+.1f} dB margin')
+            if st.button("Fetch elevation profile", key="terrain_fetch"):
+                try:
+                    path = sample_geographic_path(start_node["lat"], start_node["lon"],
+                                                  end_node["lat"], end_node["lon"], terrain_points)
+                    elevations = fetch_elevations(path)
+                    st.session_state["terrain_samples"] = "\\n".join(
+                        f"{distance:.6f},{height:.2f}" for distance, height in elevations)
+                    st.session_state["terrain_profile_identity"] = path_identity
+                    st.session_state["terrain_profile_source"] = "fetched"
+                    st.success("Elevation samples loaded for the selected link.")
+                except (ValueError, OSError, TimeoutError) as exc:
+                    st.error(f"Elevation lookup failed: {exc}")
+            if st.session_state.get("terrain_profile_identity") != path_identity:
+                st.info("No fetched terrain profile is associated with this selected link. Fetch elevations before interpreting its terrain status.")
         profile_csv = st.text_area("Elevation samples (km, meters above sea level)",
                                    value="0,100\n0.5,100\n1,100", key="terrain_samples")
         tx_h = st.number_input("TX antenna height above ground (m)", 0.0, 1000.0, 5.0, key="terrain_tx_height")
@@ -542,6 +553,11 @@ with workspace_geographic:
                                                        fresnel_fraction / 100)
             st.metric("Minimum Fresnel clearance margin",
                       f"{fresnel_result['minimum_fresnel_margin_m']:.1f} m")
+            if st.session_state.get("terrain_profile_identity") == path_identity and st.session_state.get("terrain_profile_source") == "fetched":
+                st.write("Selected geographic link terrain status:",
+                         "Geometric LOS clear" if terrain_result["clear_line_of_sight"] else "Terrain obstructed",
+                         "·", "Fresnel clearance sufficient" if fresnel_result["fresnel_clear"] else "Fresnel clearance insufficient")
+                st.caption("Status applies only to this selected link and the currently displayed samples. Editing samples changes the result; no other links or site rankings are terrain-validated.")
             st.write("First Fresnel-zone clearance:",
                      "Clear at sampled points" if fresnel_result["fresnel_clear"] else "Insufficient at sampled points")
             profile_df = pd.DataFrame(fresnel_result["samples"])
