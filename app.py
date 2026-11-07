@@ -521,7 +521,7 @@ with workspace_geographic:
                     path = sample_geographic_path(start_node["lat"], start_node["lon"],
                                                   end_node["lat"], end_node["lon"], terrain_points)
                     elevations = fetch_elevations(path)
-                    st.session_state["terrain_samples"] = "\\n".join(
+                    st.session_state["terrain_samples"] = "\n".join(
                         f"{distance:.6f},{height:.2f}" for distance, height in elevations)
                     st.session_state["terrain_profile_identity"] = path_identity
                     st.session_state["terrain_profile_source"] = "fetched"
@@ -553,7 +553,7 @@ with workspace_geographic:
                                                        fresnel_fraction / 100)
             st.metric("Minimum Fresnel clearance margin",
                       f"{fresnel_result['minimum_fresnel_margin_m']:.1f} m")
-            if st.session_state.get("terrain_profile_identity") == path_identity and st.session_state.get("terrain_profile_source") == "fetched":
+            if "path_identity" in locals() and st.session_state.get("terrain_profile_identity") == path_identity and st.session_state.get("terrain_profile_source") == "fetched":
                 st.write("Selected geographic link terrain status:",
                          "Geometric LOS clear" if terrain_result["clear_line_of_sight"] else "Terrain obstructed",
                          "·", "Fresnel clearance sufficient" if fresnel_result["fresnel_clear"] else "Fresnel clearance insufficient")
