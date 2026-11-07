@@ -417,14 +417,16 @@ with workspace_geographic:
             {"name": "Site A", "lat": 34.25, "lon": -88.40},
             {"name": "Site B", "lat": 34.26, "lon": -88.39},
         ])
+    st.caption("Edit site coordinates below. Expand radio settings only when needed.")
     edited_geo = st.data_editor(st.session_state.geo_nodes, num_rows="dynamic",
                                 use_container_width=True, key="geo_editor")
-    geo_frequency = st.number_input("Geographic RF frequency (MHz)", 1.0, 10000.0, 906.875, key="geo_frequency")
-    geo_tx_power = st.number_input("Geographic RF TX power (dBm)", -30.0, 40.0, 22.0, key="geo_tx_power")
-    geo_sensitivity = st.number_input("Geographic RF sensitivity (dBm)", -160.0, -50.0, -130.0, key="geo_sensitivity")
-    geo_tx_gain = st.number_input("Geographic TX gain (dBi)", -20.0, 40.0, 2.0, key="geo_tx_gain")
-    geo_rx_gain = st.number_input("Geographic RX gain (dBi)", -20.0, 40.0, 2.0, key="geo_rx_gain")
-    geo_loss = st.number_input("Geographic cable loss (dB)", 0.0, 100.0, 0.0, key="geo_loss")
+    with st.expander("Radio profile · advanced settings", expanded=False):
+        geo_frequency = st.number_input("Geographic RF frequency (MHz)", 1.0, 10000.0, 906.875, key="geo_frequency")
+        geo_tx_power = st.number_input("Geographic RF TX power (dBm)", -30.0, 40.0, 22.0, key="geo_tx_power")
+        geo_sensitivity = st.number_input("Geographic RF sensitivity (dBm)", -160.0, -50.0, -130.0, key="geo_sensitivity")
+        geo_tx_gain = st.number_input("Geographic TX gain (dBi)", -20.0, 40.0, 2.0, key="geo_tx_gain")
+        geo_rx_gain = st.number_input("Geographic RX gain (dBi)", -20.0, 40.0, 2.0, key="geo_rx_gain")
+        geo_loss = st.number_input("Geographic cable loss (dB)", 0.0, 100.0, 0.0, key="geo_loss")
     try:
         geo_nodes = validate_nodes(edited_geo.to_dict("records"))
         geo_profile = RadioProfile(frequency_mhz=geo_frequency, tx_power_dbm=geo_tx_power,
@@ -477,8 +479,8 @@ with workspace_geographic:
             margin=dict(l=0, r=0, t=0, b=0), height=470)
         st.plotly_chart(geo_fig, use_container_width=True)
         st.caption("Link colors: teal ≥15 dB, amber 6–15 dB, red 0–6 dB, gray below sensitivity. Zoom and pan the map to inspect nodes.")
-        st.write("Estimated pairwise geographic links")
-        st.dataframe(pd.DataFrame(geo_links), hide_index=True, use_container_width=True)
+        with st.expander("Estimated pairwise geographic links", expanded=False):
+            st.dataframe(pd.DataFrame(geo_links), hide_index=True, use_container_width=True)
         st.download_button("Export geographic links CSV", pd.DataFrame(geo_links).to_csv(index=False),
                            file_name="meshlab-geographic-links.csv", mime="text/csv")
         st.caption("Links are ideal free-space estimates; optional rings are user-defined planning distances, not RF coverage predictions. Terrain, obstruction, fading and interference are not modeled.")
