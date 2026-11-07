@@ -22,6 +22,7 @@ from meshlab.geo import geographic_links, validate_nodes
 from meshlab.coverage import theoretical_radius_km, coverage_ring
 from meshlab.terrain import analyze_terrain_profile
 from meshlab.fresnel import analyze_fresnel_clearance
+from meshlab.site_comparison import rank_sites
 from meshlab.elevation import sample_geographic_path, fetch_elevations
 
 def apply_rf_preset(settings):
@@ -479,6 +480,16 @@ with workspace_geographic:
             margin=dict(l=0, r=0, t=0, b=0), height=470)
         st.plotly_chart(geo_fig, use_container_width=True)
         st.caption("Link colors: teal ≥15 dB, amber 6–15 dB, red 0–6 dB, gray below sensitivity. Zoom and pan the map to inspect nodes.")
+        with st.expander("Compare proposed sites · modeled connectivity", expanded=True):
+            site_rankings = rank_sites(geo_nodes, geo_links)
+            st.caption("Ranked by number of above-sensitivity peer links, then weakest active link margin. These ideal free-space estimates do not include terrain or real-world reliability.")
+            st.dataframe(pd.DataFrame(site_rankings)[[
+                "rank", "name", "reachable_peers", "below_sensitivity_peers",
+                "weakest_active_margin_db", "mean_active_margin_db"]],
+                hide_index=True, use_container_width=True)
+            st.download_button("Export site comparison CSV",
+                               pd.DataFrame(site_rankings).to_csv(index=False),
+                               file_name="meshlab-site-comparison.csv", mime="text/csv")
         with st.expander("Estimated pairwise geographic links", expanded=False):
             st.dataframe(pd.DataFrame(geo_links), hide_index=True, use_container_width=True)
         st.download_button("Export geographic links CSV", pd.DataFrame(geo_links).to_csv(index=False),
