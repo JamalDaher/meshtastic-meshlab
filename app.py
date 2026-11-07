@@ -28,6 +28,7 @@ from meshlab.terrain_ranking import rank_terrain_sites
 from meshlab.height_planner import sweep_antenna_heights, optimize_independent_heights
 from meshlab.geographic_report import build_geographic_report, report_json
 from meshlab.elevation import sample_geographic_path, fetch_elevations
+from meshlab.live_dashboard import live_node_summary
 
 def apply_rf_preset(settings):
     """Button callback runs before widget construction on the next rerun."""
@@ -119,8 +120,15 @@ if mode != "Simulation":
         st.caption("SNR is in dB; RSSI is in dBm. Their scales differ.")
     else:
         st.info("No received signal readings yet.")
-    st.subheader("Node activity")
-    st.dataframe(pd.DataFrame(stats), hide_index=True, use_container_width=True)
+    st.subheader("Live node status")
+    st.caption("Read-only, received-packet metadata. Active means heard within five minutes; it does not prove the radio is currently reachable. No battery or GPS data is collected.")
+    live_rows = live_node_summary(events)
+    if live_rows:
+        st.dataframe(pd.DataFrame(live_rows), hide_index=True, use_container_width=True)
+    else:
+        st.info("No radio packets received yet. Connect a local device and refresh to populate node status.")
+    with st.expander("Packet activity details"):
+        st.dataframe(pd.DataFrame(stats), hide_index=True, use_container_width=True)
     st.download_button("Export metadata CSV", export_csv(events),
                        file_name="meshlab-telemetry.csv", mime="text/csv", disabled=not events)
     st.subheader("Latest node readings")
