@@ -31,6 +31,7 @@ from meshlab.elevation import sample_geographic_path, fetch_elevations
 from meshlab.live_dashboard import live_node_summary
 from meshlab.connection_diagnostics import connection_diagnostics
 from meshlab.signal_quality import signal_quality_summary
+from meshlab.signal_history import comparison_series
 
 def apply_rf_preset(settings):
     """Button callback runs before widget construction on the next rerun."""
@@ -133,6 +134,28 @@ if mode != "Simulation":
         st.caption("SNR is in dB; RSSI is in dBm. Their scales differ.")
     else:
         st.info("No received signal readings yet.")
+    with st.expander("Compare received signal history", expanded=False):
+        st.caption("Compare received packet measurements by node. RSSI and SNR use different units and are charted separately. No measurements are inferred between packets.")
+        observed_nodes = sorted({e.get("node") for e in events if isinstance(e.get("node"), str) and e.get("node")})
+        compared_nodes = st.multiselect("Nodes to compare", observed_nodes, default=observed_nodes[:3], key="live_compare_nodes")
+        compared_metric = st.radio("Measurement", ["SNR (dB)", "RSSI (dBm)"], horizontal=True, key="live_compare_metric")
+        metric_key = "snr" if compared_metric == "SNR (dB)" else "rssi"
+        comparison = comparison_series(events, compared_nodes, metric_key)
+        if comparison:
+            plot_df = pd.DataFrame(comparison)
+            plot_df["time"] = pd.to_datetime(plot_df["time"], utc=True)
+            fig = go.Figure()
+            for node in compared_nodes:
+                node_df = plot_df[plot_df["node"] == node]
+                if not node_df.empty:
+                    fig.add_trace(go.Scatter(x=node_df["time"], y=node_df["reading"],
+                                             mode="lines+markers", name=node, connectgaps=False))
+            fig.update_layout(xaxis_title="Received at (UTC)", yaxis_title=compared_metric,
+                              legend_title="Observed node", height=350)
+            st.plotly_chart(fig, use_container_width=True)
+            st.caption("Lines connect discrete received samples for visual comparison; they are not continuous measurements.")
+        else:
+            st.info("Select nodes with valid received signal readings to compare.")
     st.subheader("Observed signal quality")
     st.caption("Per-node descriptive RSSI (dBm) and SNR (dB) statistics from received packet metadata only. No packet-delivery rate, link reliability, or quality grade is inferred.")
     quality_rows = signal_quality_summary(events)
