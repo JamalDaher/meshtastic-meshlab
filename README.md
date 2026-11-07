@@ -108,3 +108,5 @@ The terrain panel includes a discrete **Antenna-height planner** that raises bot
 The antenna-height planner also offers on-demand independent TX/RX height combinations, ranked by minimum combined added height on the chosen discrete grid (up to 20,000 combinations). This is not a structural, cost, or field-propagation optimization.
 
 Use **Download geographic planning report** in the Geographic workspace to export versioned JSON with site coordinates, modeled RF links, site rankings, saved-profile terrain assessments, radio/antenna assumptions and explicit model limitations. Raw elevation samples are not included. The report does not imply that unassessed links are clear.
+
+The local live-radio panel distinguishes **Disconnected**, **Connected · awaiting packets**, **Receiving recently**, and **Connected · no recent packets**. These statuses reflect transport state and observed packet metadata, not confirmed two-way radio connectivity.
