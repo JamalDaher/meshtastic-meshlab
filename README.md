@@ -112,3 +112,5 @@ Use **Download geographic planning report** in the Geographic workspace to expor
 The local live-radio panel distinguishes **Disconnected**, **Connected · awaiting packets**, **Receiving recently**, and **Connected · no recent packets**. These statuses reflect transport state and observed packet metadata, not confirmed two-way radio connectivity.
 
 Live mode now summarizes per-node observed RSSI and SNR (sample counts, mean, minimum and maximum) from recent received packet metadata. These are descriptive statistics, not packet-delivery estimates or validated link-quality scores.
+
+The local live-radio dashboard also provides an optional multi-node signal-history comparison with separate RSSI and SNR plots, using only received packet metadata retained in memory.
