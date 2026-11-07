@@ -16,6 +16,10 @@ The v1.1 network-planning milestone adds a compact, outage-aware simulation summ
 
 The existing **Live radio (local only)** mode supports read-only USB serial and private-LAN TCP connections when optional Meshtastic dependencies are installed. The new node status dashboard summarizes packet counts, last-seen time, active/stale status, and latest received RSSI/SNR without retaining messages, payloads or positions. It does **not** collect battery or GPS readings and cannot prove radio reachability. The hosted Streamlit demo remains simulation-only when configured with `MESHLAB_SIMULATION_ONLY=1`.
 
+## v1.4 Live Network Diagnostics
+
+The **local-only Live radio** workspace includes received node status, connection-state diagnostics, RSSI/SNR summaries, multi-node signal history, and receive-data gap flags. The hosted demo is simulation-only when configured with `MESHLAB_SIMULATION_ONLY=1`. These are observed receive metrics, not verified packet delivery or radio reachability. See [v1.4 release notes and validation checklist](docs/RELEASE_NOTES_V1_4.md).
+
 ## v1.3 Geographic RF Planning
 
 The **Geographic** tab supports map-based node placement, ideal RF links and coverage rings, optional sampled terrain and Fresnel clearance analysis, session-only multi-link comparisons, terrain-aware site rankings, antenna-height planning, and downloadable planning reports. This is a model-based planning aid, not verified radio coverage. See [v1.3 release notes and validation checklist](docs/RELEASE_NOTES_V1_3.md).
