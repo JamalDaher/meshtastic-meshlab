@@ -96,3 +96,5 @@ For multi-link planning, explicitly fetch and save each link's elevation profile
 The Geographic workspace also ranks sites by **evaluated** RF-above-sensitivity links with sampled terrain and Fresnel clearance. It shows how many links are unevaluated and never treats missing terrain as clear. The ranking is limited to sampled elevations, assumes shared antenna heights and does not model vegetation, diffraction, or measured packet reliability.
 
 The terrain panel includes a discrete **Antenna-height planner** that raises both endpoint antennas by equal increments to find the first sampled Fresnel-clear configuration within a user-selected limit. It does not optimize independently, model clutter, or certify tower heights.
+
+The antenna-height planner also offers on-demand independent TX/RX height combinations, ranked by minimum combined added height on the chosen discrete grid (up to 20,000 combinations). This is not a structural, cost, or field-propagation optimization.
