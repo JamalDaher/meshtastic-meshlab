@@ -32,6 +32,7 @@ from meshlab.live_dashboard import live_node_summary
 from meshlab.connection_diagnostics import connection_diagnostics
 from meshlab.signal_quality import signal_quality_summary
 from meshlab.signal_history import comparison_series
+from meshlab.network_diagnostics import diagnostic_rows, diagnostic_totals
 
 def apply_rf_preset(settings):
     """Button callback runs before widget construction on the next rerun."""
@@ -134,6 +135,18 @@ if mode != "Simulation":
         st.caption("SNR is in dB; RSSI is in dBm. Their scales differ.")
     else:
         st.info("No received signal readings yet.")
+    st.subheader("Live network diagnostics")
+    st.caption("Flags identify gaps in received metadata, not confirmed radio failures. Packet counts are bounded by the in-memory session history.")
+    diagnostic_data = diagnostic_rows(events)
+    diagnostic_counts = diagnostic_totals(diagnostic_data)
+    dx1, dx2, dx3 = st.columns(3)
+    dx1.metric("Observed nodes", diagnostic_counts["observed_nodes"])
+    dx2.metric("Nodes with data gaps", diagnostic_counts["nodes_with_flags"])
+    dx3.metric("No gaps flagged", diagnostic_counts["nodes_without_flags"])
+    if diagnostic_data:
+        st.dataframe(pd.DataFrame(diagnostic_data), hide_index=True, use_container_width=True)
+    else:
+        st.info("Receive packet metadata to see network diagnostics.")
     with st.expander("Compare received signal history", expanded=False):
         st.caption("Compare received packet measurements by node. RSSI and SNR use different units and are charted separately. No measurements are inferred between packets.")
         observed_nodes = sorted({e.get("node") for e in events if isinstance(e.get("node"), str) and e.get("node")})
