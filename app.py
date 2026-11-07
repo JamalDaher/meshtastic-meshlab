@@ -526,6 +526,7 @@ with workspace_geographic:
                         f"{distance:.6f},{height:.2f}" for distance, height in elevations)
                     st.session_state["terrain_profile_identity"] = path_identity
                     st.session_state["terrain_profile_source"] = "fetched"
+                    st.session_state["terrain_fetched_samples"] = elevations
                     st.success("Elevation samples loaded for the selected link.")
                 except (ValueError, OSError, TimeoutError) as exc:
                     st.error(f"Elevation lookup failed: {exc}")
@@ -566,9 +567,7 @@ with workspace_geographic:
                     and st.session_state.get("terrain_profile_source") == "fetched"):
                 if st.button("Save fetched profile for link comparison", key="terrain_save_link"):
                     saved = st.session_state.setdefault("saved_link_terrain", {})
-                    saved[link_key(start_node, end_node)] = [
-                        (float(distance), float(elevation)) for distance, elevation in terrain_samples
-                    ]
+                    saved[link_key(start_node, end_node)] = list(st.session_state["terrain_fetched_samples"])
                     st.success("Saved this sampled terrain profile in the current session.")
             profile_df = pd.DataFrame(fresnel_result["samples"])
             st.line_chart(profile_df.set_index("distance_km")[["terrain_elevation_m", "sightline_elevation_m"]])
@@ -577,7 +576,8 @@ with workspace_geographic:
             st.caption("Earth curvature uses an approximate 4/3 effective Earth radius. Clearance calculations include curvature, while the simple line chart does not plot the curvature bulge. Fresnel-zone clearance is estimated at supplied sample points only; the second chart compares actual clearance against the required Fresnel clearance. Clutter and diffraction are not modeled.")
         except (ValueError, TypeError) as exc:
             st.warning(f"Invalid terrain profile: {exc}")
-        if "geo_nodes" in locals() and "geo_links" in locals():
+        if ("geo_nodes" in locals() and "geo_links" in locals()
+                and "fresnel_frequency" in locals() and "fresnel_fraction" in locals()):
             with st.expander("Compare saved link terrain profiles", expanded=False):
                 st.caption("Profiles are saved only for this browser session. Unchecked links remain Not evaluated; this is not an automatic terrain survey.")
                 comparison_rows = summarize_saved_links(
